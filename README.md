@@ -4,7 +4,7 @@
 
 A faster and fully support of [google-java-format](https://github.com/google/google-java-format) plugin.
 
-### Why service?
+### Why service
 
 In traditional implemention, JVM launching happens after `.java` files are saved. Launching JVM is a heavy and slow process during coding in VSCode.
 

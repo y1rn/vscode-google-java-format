@@ -2,7 +2,7 @@
 
 ## Features
 
-A faster and fully suppport of [google-java-format](https://github.com/google/google-java-format) plugin.
+A faster and fully support of [google-java-format](https://github.com/google/google-java-format) plugin.
 
 ### Why service?
 

@@ -20,13 +20,16 @@
 *.rar
 *target
 .vscode
+.eslintrc.js
 dist
 *.classpath
 *.factorypath
 *.project
 *.settings/
 google-java-format-service/bin
+dependency-reduced-pom.xml
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 node_modules
+out

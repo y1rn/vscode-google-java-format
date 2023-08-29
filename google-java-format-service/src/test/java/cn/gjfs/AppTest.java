@@ -1,4 +1,4 @@
-package cn.ericpai.gjfs;
+package cn.gjfs;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

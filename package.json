@@ -10,6 +10,9 @@
   "categories": [
     "Other"
   ],
+  "extensionDependencies": [
+    "redhat.java"
+  ],
   "activationEvents": [
     "onLanguage:java"
   ],

@@ -164,27 +164,32 @@ async function downloadJar(context: vscode.ExtensionContext): Promise<void>{
   if (httpCfg.proxy) {
     agent = new HttpsProxyAgent(httpCfg.proxy);
   }
-
-  const response = await fetch(GoogleJavaFormatInfoUrl, {
-    headers: { "Content-Type": "application/json" },
-    method: "GET",
-    agent: agent,
-  });
-  if (!response.ok) {
-    const data = await response.text();
-    vscode.window.showErrorMessage(data);
-    return Promise.reject();
-  }
-  const data = await response.json();
-  var  downloadUrl;
+  var downloadUrl;
   var filePath;
-  for (const asset of data.assets) {
-    if (asset.name.match("^google-java-format-[0-9]+\.[0-9]+\.[0-9]+-all-deps.jar$")) {
-      downloadUrl = asset.browser_download_url;
-      filePath = context.globalStorageUri.fsPath + sep + asset.name;
-      break;
+  try {
+    const response = await fetch(GoogleJavaFormatInfoUrl, {
+      headers: { "Content-Type": "application/json" },
+      method: "GET",
+      agent: agent,
+    });
+    if (!response.ok) {
+      const data = await response.text();
+      vscode.window.showErrorMessage(data);
+      return Promise.reject();
     }
+    const data = await response.json();
+
+    for (const asset of data.assets) {
+      if (asset.name.match("^google-java-format-[0-9]+\.[0-9]+\.[0-9]+-all-deps.jar$")) {
+        downloadUrl = asset.browser_download_url;
+        filePath = context.globalStorageUri.fsPath + sep + asset.name;
+        break;
+      }
+    }
+  } catch (error) {
+    vscode.window.showErrorMessage("fail to get google-java-format info");
   }
+  
 
   if (!filePath) return Promise.reject();
 
@@ -194,21 +199,22 @@ async function downloadJar(context: vscode.ExtensionContext): Promise<void>{
   }
 
   if (downloadUrl) {
-    // console.log(`download file from url [${downloadUrl}]`);
- 
-    const response = await fetch(downloadUrl, { agent: agent });
-    
-    if (!response.ok) {
-      const data = await response.text();
-      console.error(data)
-      vscode.window.showErrorMessage(data);
-      return Promise.reject();
-    }
-    const buffer = await response.buffer();
-    await fs.promises.writeFile(filePath.toString(), buffer);
-    context.globalState.update("gjfs.jar-file", filePath);
-    return Promise.resolve()
+  try {
+      const response = await fetch(downloadUrl, { agent: agent });
 
+      if (!response.ok) {
+        const data = await response.text();
+        console.error(data)
+        vscode.window.showErrorMessage(data);
+        return Promise.reject();
+      }
+      const buffer = await response.buffer();
+      await fs.promises.writeFile(filePath.toString(), buffer);
+      context.globalState.update("gjfs.jar-file", filePath);
+      return Promise.resolve()
+    } catch (error) {
+      vscode.window.showErrorMessage("fail to download google-java-format jar file");
+    }
   }
 
   return Promise.reject()

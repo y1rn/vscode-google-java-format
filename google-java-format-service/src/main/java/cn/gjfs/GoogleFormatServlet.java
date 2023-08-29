@@ -51,7 +51,7 @@ public class GoogleFormatServlet extends HttpServlet {
         output = RemoveUnusedImports.removeUnusedImports(output);
       }
       if (!req.isSkipSortingImports()) {
-        output = ImportOrderer.reorderImports(output);
+        output = ImportOrderer.reorderImports(output,req.getStyleName().GetGoogleJavaFormatterStyle());
       }
 
       response.setStatus(HttpServletResponse.SC_OK);

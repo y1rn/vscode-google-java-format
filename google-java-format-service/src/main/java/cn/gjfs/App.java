@@ -1,7 +1,9 @@
 package cn.gjfs;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -9,6 +11,9 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.unixdomain.server.UnixDomainServerConnector;
+// import org.eclipse.jetty.util.component.LifeCycle;
+
+import com.google.common.base.Strings;
 
 public class App {
   public static void main(String[] args) throws Exception {
@@ -27,7 +32,13 @@ public class App {
       throw ex;
     }
     Server server;
-    if (unixSocketPath != null) {
+    if (!Strings.isNullOrEmpty(unixSocketPath)) {
+      File file = new File(unixSocketPath);
+      if (file.isDirectory()) {
+        throw new IllegalArgumentException("socket file is a directory");
+      } else {
+        Files.deleteIfExists(file.toPath()); 
+      }
       server = new Server();
       // The number of acceptor threads.
       int acceptors = 1;
@@ -41,6 +52,21 @@ public class App {
       // The TCP accept queue size.
       connector.setAcceptQueueSize(128);
       server.addConnector(connector);
+      Runtime.getRuntime().addShutdownHook(new Thread(()->{
+        try {
+          Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+          e.printStackTrace();
+        } 
+      }));
+      // server.addEventListener(new LifeCycle.Listener(){
+      //   @Override
+      //   public
+      //   void lifeCycleStarted(LifeCycle event) {
+          
+      //   }
+      // });
+
     }else {
       server = new Server(port);
     }

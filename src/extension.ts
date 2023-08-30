@@ -92,9 +92,6 @@ export function deactivate() {
     }
     console.log(`kill process  : ${PROCESS.pid}`);
     PROCESS = null;
-    if (!!SOCKET_PATH && fs.existsSync(SOCKET_PATH)) {
-      // fs.unlinkSync(SOCKET_PATH);
-    }
   }
 }
 
@@ -112,35 +109,43 @@ async function getResp(
       return new Promise((resolve, reject) =>{
         const callback = (res: http.IncomingMessage) => {
           res.setEncoding('utf8');
+          res.on('error', data => {
+            console.log(data);
+            reject([]);
+          });
           if (res.statusCode == 200) {
             res.on('data', data => {
               console.log(data);
               resolve([vscode.TextEdit.replace(range, data)]);
             });
           }else{
-            res.on('error', data => {
-              console.error(data)
-              reject([]);              
-            });
+            reject([]);
           }
         };
-        try {
-          const clientRequest = http.request({
-            socketPath: SOCKET_PATH || "",
-            path: '/files',
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-          }, callback);
-          clientRequest.write(JSON.stringify({
-            skipSortingImports: cfg.get("skipSortingImports"),
-            skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
-            styleName: cfg.get("style"),
-            data: document.getText(range),
-          }));
-          clientRequest.end();
-        } catch (error) {
-          console.error(error);
-          reject([]);
+       
+        if (!!SOCKET_PATH) {
+          try {
+            const clientRequest = http.request({
+              socketPath: SOCKET_PATH || "",
+              path: '/files',
+              headers: { "Content-Type": "application/json" },
+              method: "POST",
+            }, callback);
+            clientRequest.write(JSON.stringify({
+              skipSortingImports: cfg.get("skipSortingImports"),
+              skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
+              styleName: cfg.get("style"),
+              data: document.getText(range),
+            }));
+            clientRequest.on("error", (error) => {
+              console.error(error);
+              reject([]);
+            });
+            clientRequest.end();
+          } catch (error) {
+            console.error(error);
+            reject([]);
+          }
         }
 
       });
@@ -192,23 +197,20 @@ async function starService(context: vscode.ExtensionContext) {
     }
   }
 
+  const jarPath = `${localJarPath}${delimiter}${googleJarPath}`;
   //try to startup with unix socket
   if (platform() != 'win32') {
     try {
       const socketPath = context.globalStorageUri.fsPath + sep + SOCK_FILE_NAME;
-      try {
-        fs.unlinkSync(socketPath);
-      } catch (error) { }
-      PROCESS = cp.spawn(cmd, ['-cp', `\"${localJarPath}${delimiter}${googleJarPath}\"`,
+
+      PROCESS = cp.spawn(cmd, ['-cp', jarPath,
         ...JAVA_EXPORT,
         'cn.gjfs.App',
         `-s=${socketPath}`
       ], {
-        shell: true,
-        cwd: context.extensionPath,
+        shell: false,
+        cwd: context.globalStorageUri.fsPath,
       });
-      SOCKET_PATH = socketPath;
-      SERVER_ADDR = 'http://localhost'
       console.log("service start up with socket path: " + socketPath);
       if (!!PROCESS) {
         PROCESS.stdout.on('data', (data) => {
@@ -217,17 +219,30 @@ async function starService(context: vscode.ExtensionContext) {
         PROCESS.stderr.on('data', (data) => {
           console.log(`google java format: ${data}`);
         });
+        PROCESS.stderr.on('close', () => {
+          console.log("service with unix socket start failed, try to start service with random port");
+          SOCKET_PATH = null;
+          starServiceWithPort(cmd, jarPath, context);
+        });
       }
+
+      SOCKET_PATH = socketPath;
+      SERVER_ADDR = 'http://localhost'
       return;
     } catch (err) {
       console.log(err);
     }
   }
  
+  starServiceWithPort(cmd, jarPath,context);
 
+
+}
+
+async function starServiceWithPort(cmd:string, jarPath:string, context: vscode.ExtensionContext){
   try {
     const port = await getPortFree();
-    PROCESS = cp.spawn(cmd, ['-cp', `\"${localJarPath}${delimiter}${googleJarPath}\"`,
+    PROCESS = cp.spawn(cmd, ['-cp', jarPath,
       ...JAVA_EXPORT,
       'cn.gjfs.App',
       `-p=${port}`
@@ -235,7 +250,7 @@ async function starService(context: vscode.ExtensionContext) {
       shell: true,
       cwd: context.extensionPath,
     });
-   
+
     console.log("service start up on port: " + port);
     SERVER_ADDR = `http://localhost:${port}/files`
 
@@ -250,8 +265,8 @@ async function starService(context: vscode.ExtensionContext) {
   } catch (err) {
     console.log(err);
   }
-
 }
+
 
 async function downloadJar(context: vscode.ExtensionContext): Promise<void> {
   const httpCfg = vscode.workspace.getConfiguration("http");

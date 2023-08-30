@@ -2,6 +2,7 @@
 node_modules
 out/
 src/
+dist/*.js.map
 tsconfig.json
 webpack.config.js
 google-java-format-service/

@@ -8,13 +8,24 @@ import * as cp from "child_process";
 import { delimiter, sep } from 'path'
 import { platform } from 'os'
 import * as glob from "fast-glob";
+import * as http from "http";
 
-const GoogleJavaFormatInfoUrl = "https://api.github.com/repos/google/google-java-format/releases/latest";
-const LocalJarFile = "google-java-format-service.jar";
-var PROCESS: cp.ChildProcessWithoutNullStreams;
-var PORT: number;
+const GOOGLE_JAVA_FORMAT_INFO_URL = "https://api.github.com/repos/google/google-java-format/releases/latest";
+const LOCAL_JAR_FILE = "google-java-format-service.jar";
 const NAME = 'y1rn.google-java-format';
 const JAVA_GLOB = `${sep}jre${sep}*${sep}bin${sep}java${(platform() == 'win32' ? ".exe" : "")}`;
+const SOCK_FILE_NAME = "gjfs.sock";
+const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
+                    '--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
+                    '--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+                    '--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+                    '--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'];
+
+var PROCESS: cp.ChildProcessWithoutNullStreams | null;
+var PORT: number;
+var SOCKET_PATH:string | null;
+var SERVER_ADDR: string | null;
+
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -59,7 +70,7 @@ function startUp(context: vscode.ExtensionContext) {
 
 
   if (!fs.existsSync(context.globalStorageUri.fsPath)) {
-    fs.mkdir(context.globalStorageUri.fsPath, (error: any) => error ? console.log(error) : console.log('You have created the' + context.globalStorageUri.fsPath));
+    fs.mkdir(context.globalStorageUri.fsPath, (error: any) => error ? console.log(error) : console.log('You have created extension folder: ' + context.globalStorageUri.fsPath));
   }
   const filePath = context.globalState.get<string>("gjfs.jar-file");
   if (!filePath || filePath == "" || !fs.existsSync(filePath.toString())) {
@@ -74,8 +85,16 @@ function startUp(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export function deactivate() {
   if (PROCESS != null && !PROCESS.killed) {
-    PROCESS.kill('SIGKILL');
+    if (platform() == 'win32') {
+      cp.exec('taskkill /F /pid ' + PROCESS.pid);
+    }else{
+      PROCESS.kill('SIGKILL');
+    }
     console.log(`kill process  : ${PROCESS.pid}`);
+    PROCESS = null;
+    if (!!SOCKET_PATH && fs.existsSync(SOCKET_PATH)) {
+      // fs.unlinkSync(SOCKET_PATH);
+    }
   }
 }
 
@@ -83,27 +102,73 @@ async function getResp(
   document: vscode.TextDocument,
   range: vscode.Range
 ): Promise<vscode.TextEdit[]> {
-  if (!PROCESS || !PROCESS.pid || PROCESS.killed) {
-    Promise.reject([])
+  if (!PROCESS || !PROCESS.pid || PROCESS.killed ) {
+    return Promise.reject([])
   }
   const cfg = vscode.workspace.getConfiguration("gjfs");
-  const response = await fetch(`http://localhost:${PORT}/files`, {
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      skipSortingImports: cfg.get("skipSortingImports"),
-      skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
-      styleName: cfg.get("style"),
-      data: document.getText(range),
-    }),
-    method: "POST",
-  });
-  const data = await response.text();
+ 
+  if (!!SERVER_ADDR) {
+    if (!!SOCKET_PATH) {
+      return new Promise((resolve, reject) =>{
+        const callback = (res: http.IncomingMessage) => {
+          res.setEncoding('utf8');
+          if (res.statusCode == 200) {
+            res.on('data', data => {
+              console.log(data);
+              resolve([vscode.TextEdit.replace(range, data)]);
+            });
+          }else{
+            res.on('error', data => {
+              console.error(data)
+              reject([]);              
+            });
+          }
+        };
+        try {
+          const clientRequest = http.request({
+            socketPath: SOCKET_PATH || "",
+            path: '/files',
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
+          }, callback);
+          clientRequest.write(JSON.stringify({
+            skipSortingImports: cfg.get("skipSortingImports"),
+            skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
+            styleName: cfg.get("style"),
+            data: document.getText(range),
+          }));
+          clientRequest.end();
+        } catch (error) {
+          console.error(error);
+          reject([]);
+        }
 
-  if (!response.ok || !data) {
-    vscode.window.showErrorMessage(data);
-    return Promise.reject([]);
+      });
+    } else {
+      var response = await fetch(SERVER_ADDR, {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          skipSortingImports: cfg.get("skipSortingImports"),
+          skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
+          styleName: cfg.get("style"),
+          data: document.getText(range),
+        }),
+        method: "POST",
+      });
+
+      const data = await response.text();
+
+      if (!response.ok || !data) {
+        vscode.window.showErrorMessage(data);
+        return Promise.reject([]);
+      }
+      return Promise.resolve([vscode.TextEdit.replace(range, data)]);
+    }
+  
   }
-  return Promise.resolve([vscode.TextEdit.replace(range, data)]);
+  return Promise.reject([]);
+
+
 }
 
 async function starService(context: vscode.ExtensionContext) {
@@ -115,8 +180,7 @@ async function starService(context: vscode.ExtensionContext) {
   if (!googleJarPath) {
     return;
   }
-  PORT = await getPortFree();
-  const localJarPath = context.extensionPath + sep + "dist" + sep + LocalJarFile;
+  const localJarPath = context.extensionPath + sep + "dist" + sep + LOCAL_JAR_FILE;
 
   var cmd = "java";
   var redhatPath = vscode.extensions.getExtension("redhat.java")?.extensionPath;
@@ -128,27 +192,64 @@ async function starService(context: vscode.ExtensionContext) {
     }
   }
 
+  //try to startup with unix socket
+  if (platform() != 'win32') {
+    try {
+      const socketPath = context.globalStorageUri.fsPath + sep + SOCK_FILE_NAME;
+      try {
+        fs.unlinkSync(socketPath);
+      } catch (error) { }
+      PROCESS = cp.spawn(cmd, ['-cp', `\"${localJarPath}${delimiter}${googleJarPath}\"`,
+        ...JAVA_EXPORT,
+        'cn.gjfs.App',
+        `-s=${socketPath}`
+      ], {
+        shell: true,
+        cwd: context.extensionPath,
+      });
+      SOCKET_PATH = socketPath;
+      SERVER_ADDR = 'http://localhost'
+      console.log("service start up with socket path: " + socketPath);
+      if (!!PROCESS) {
+        PROCESS.stdout.on('data', (data) => {
+          console.log(`google java format: ${data}`);
+        });
+        PROCESS.stderr.on('data', (data) => {
+          console.log(`google java format: ${data}`);
+        });
+      }
+      return;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+ 
 
-  console.log("java patddh: ",cmd);
+  try {
+    const port = await getPortFree();
+    PROCESS = cp.spawn(cmd, ['-cp', `\"${localJarPath}${delimiter}${googleJarPath}\"`,
+      ...JAVA_EXPORT,
+      'cn.gjfs.App',
+      `-p=${port}`
+    ], {
+      shell: true,
+      cwd: context.extensionPath,
+    });
+   
+    console.log("service start up on port: " + port);
+    SERVER_ADDR = `http://localhost:${port}/files`
 
-  PROCESS = cp.spawn(cmd, ['-cp', `\"${localJarPath}${delimiter}${googleJarPath}\"`,
-    '--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
-    '--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
-    '--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
-    '--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
-    '--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED',
-    'cn.gjfs.App',
-    `-p=${PORT}`
-  ], {
-    shell: true,
-    cwd: context.extensionPath,
-  });
-  // PROCESS.stdout.on('data', (data) => {
-  //   console.log(`google java format: ${data}`);
-  // });
-  // PROCESS.stderr.on('data', (data) => {
-  //   console.log(`google java format: ${data}`);
-  // });
+    if (!!PROCESS) {
+      PROCESS.stdout.on('data', (data) => {
+        console.log(`google java format: ${data}`);
+      });
+      PROCESS.stderr.on('data', (data) => {
+        console.log(`google java format: ${data}`);
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
 
 }
 
@@ -161,7 +262,7 @@ async function downloadJar(context: vscode.ExtensionContext): Promise<void> {
   var downloadUrl;
   var filePath;
   try {
-    const response = await fetch(GoogleJavaFormatInfoUrl, {
+    const response = await fetch(GOOGLE_JAVA_FORMAT_INFO_URL, {
       headers: { "Content-Type": "application/json" },
       method: "GET",
       agent: agent,

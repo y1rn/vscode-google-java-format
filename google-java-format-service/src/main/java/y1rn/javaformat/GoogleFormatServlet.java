@@ -1,4 +1,4 @@
-package cn.gjfs;
+package y1rn.javaformat;
 
 import com.google.googlejavaformat.java.Formatter;
 import com.google.googlejavaformat.java.ImportOrderer;

@@ -4,22 +4,22 @@
 
 A simple HTTP service to format codes in [google-java-format](https://github.com/google/google-java-format)
 
-Depends on google-java-format **1.7**
+Depends on google-java-format **1.17.0**
 
 ## Requirements
 
-- Java >= `11`
+- Java >= `17`
 
 ## Install
 
 1. Download the google-java-format-`<VERSION>`-jar-with-dependencies.jar file from [release page](https://github.com/google/google-java-format/releases)
 2. build jar with `mvn package`
-3. Run with `java -cp google-java-format-service.jar:google-java-format-<VERSION>-jar-with-dependencies.jar cn.gjfs.App -p <PORT>`
-
+3. Run with `java -cp google-java-format-service.jar:google-java-format-<VERSION>-all-deps.jar y1rn.javaformat.App -p <PORT>`
 
 ## Run parameters
 
 - `p`: The port of the service. Default is `8030`
+- `s`: unix socket file path of the service. This setting will ignore `port`, Default is null
 
 ## API
 
@@ -35,7 +35,7 @@ Format input codes with its parameters
     "styleName": "GOOGLE|ASAP",
     "skipSortingImports": true | false,
     "skipRemovingUnusedImports": true | false,
-    "data": "my codes"
+    "data": "java code"
   }
   ```
 

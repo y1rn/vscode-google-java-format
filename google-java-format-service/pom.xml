@@ -3,7 +3,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>cn.gjfs</groupId>
+  <groupId>y1rn.javaformat</groupId>
   <artifactId>google-java-format-service</artifactId>
   <version>1.0</version>
 
@@ -103,7 +103,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>cn.gjfs.App</mainClass>
+              <mainClass>y1rn.javaformat.App</mainClass>
             </manifest>
           </archive>
           <outputDirectory>${output}</outputDirectory>

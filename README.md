@@ -21,6 +21,6 @@ Do following configuration on settings.json after install:
 
 ## Extension Settings
 
-- `gjfs.style`: Enum string value [`GOOGLE`, `AOSP`]. The style name of google java format. Default is `GOOGLE`.
-- `gjfs.skipSortingImports`: Boolean value. Whether to fix the import order, but unused imports will still be removed. Default is `true`.
-- `gjfs.skipRemovingUnusedImports`: Boolean value. Whether to remove unused imports. Imports will still be sorted. Default is `false`.
+- `google-java-format.style`: Enum string value [`GOOGLE`, `AOSP`]. The style name of google java format. Default is `GOOGLE`.
+- `google-java-format.skipSortingImports`: Boolean value. Whether to fix the import order, but unused imports will still be removed. Default is `true`.
+- `google-java-format.skipRemovingUnusedImports`: Boolean value. Whether to remove unused imports. Imports will still be sorted. Default is `false`.

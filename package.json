@@ -22,7 +22,7 @@
       {
         "title": "Google Java Format Service",
         "properties": {
-          "gjfs.style": {
+          "google-java-format.style": {
             "title": "The style name of google java format",
             "type": "string",
             "default": "GOOGLE",
@@ -35,13 +35,13 @@
               "AOSP Style (4-space indentation)"
             ]
           },
-          "gjfs.skipSortingImports": {
+          "google-java-format.skipSortingImports": {
             "title": "Whether to fix the import order, but unused imports will still be removed",
             "type": "boolean",
             "default": true,
             "description": "Do not fix the import order. Unused imports will still be removed"
           },
-          "gjfs.skipRemovingUnusedImports": {
+          "google-java-format.skipRemovingUnusedImports": {
             "title": "Whether to remove unused imports. Imports will still be sorted",
             "type": "boolean",
             "default": false,

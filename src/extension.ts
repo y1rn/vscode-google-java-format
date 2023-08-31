@@ -16,7 +16,6 @@ const GOOGLE_JAVA_FORMAT_INFO_URL = "https://api.github.com/repos/google/google-
 const LOCAL_JAR_FILE = "google-java-format-service.jar";
 const NAME = 'y1rn.google-java-format';
 const JAVA_GLOB = `${sep}jre${sep}*${sep}bin${sep}java${(platform() == 'win32' ? ".exe" : "")}`;
-const SOCK_FILE_NAME = "gjfs.sock";
 const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
                     '--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
                     '--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
@@ -24,7 +23,6 @@ const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNN
                     '--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'];
 
 var PROCESS: cp.ChildProcessWithoutNullStreams | null;
-var PORT: number;
 var SOCKET_PATH:string | null;
 var SERVER_ADDR: string | null;
 
@@ -74,7 +72,7 @@ function startUp(context: vscode.ExtensionContext) {
   if (!fs.existsSync(context.globalStorageUri.fsPath)) {
     fs.mkdir(context.globalStorageUri.fsPath, (error: any) => error ? console.log(error) : console.log('You have created extension folder: ' + context.globalStorageUri.fsPath));
   }
-  const filePath = context.globalState.get<string>("gjfs.jar-file");
+  const filePath = context.globalState.get<string>("google-java-format.jar-file");
   if (!filePath || filePath == "" || !fs.existsSync(filePath.toString())) {
     vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
@@ -109,7 +107,7 @@ async function getResp(
   if (!PROCESS || !PROCESS.pid || PROCESS.killed ) {
     return Promise.reject([])
   }
-  const cfg = vscode.workspace.getConfiguration("gjfs");
+  const cfg = vscode.workspace.getConfiguration("google-java-format");
  
   if (!!SERVER_ADDR) {
     if (!!SOCKET_PATH) {
@@ -188,7 +186,7 @@ async function starService(context: vscode.ExtensionContext) {
   if (PROCESS && !PROCESS.killed) {
     return;
   }
-  const googleJarPath = context.globalState.get("gjfs.jar-file");
+  const googleJarPath = context.globalState.get("google-java-format.jar-file");
   if (!googleJarPath) {
     return;
   }
@@ -212,7 +210,7 @@ async function starService(context: vscode.ExtensionContext) {
 
       PROCESS = cp.spawn(cmd, ['-cp', jarPath,
         ...JAVA_EXPORT,
-        'cn.gjfs.App',
+        'y1rn.javaformat.App',
         `-s=${socketPath}`
       ], {
         shell: false,
@@ -251,7 +249,7 @@ async function starServiceWithPort(cmd:string, jarPath:string, context: vscode.E
     const port = await getPortFree();
     PROCESS = cp.spawn(cmd, ['-cp', jarPath,
       ...JAVA_EXPORT,
-      'cn.gjfs.App',
+      'y1rn.javaformat.App',
       `-p=${port}`
     ], {
       shell: true,
@@ -313,7 +311,7 @@ async function downloadJar(context: vscode.ExtensionContext, progress: vscode.Pr
   if (!filePath) return Promise.reject();
 
   if (fs.existsSync(filePath.toString())) {
-    context.globalState.update("gjfs.jar-file", filePath);
+    context.globalState.update("google-java-format.jar-file", filePath);
     return Promise.resolve();
   }
 
@@ -333,7 +331,7 @@ async function downloadJar(context: vscode.ExtensionContext, progress: vscode.Pr
       }
       const buffer = await response.buffer();
       await fs.promises.writeFile(filePath.toString(), buffer);
-      context.globalState.update("gjfs.jar-file", filePath);
+      context.globalState.update("google-java-format.jar-file", filePath);
       return Promise.resolve()
     } catch (error) {
       vscode.window.showErrorMessage("fail to download google-java-format jar file");

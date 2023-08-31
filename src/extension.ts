@@ -76,9 +76,14 @@ function startUp(context: vscode.ExtensionContext) {
   }
   const filePath = context.globalState.get<string>("gjfs.jar-file");
   if (!filePath || filePath == "" || !fs.existsSync(filePath.toString())) {
-    downloadJar(context).then(() => {
+    vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: "Download File",
+      cancellable: false
+    }, async (progress) => {
+      await downloadJar(context, progress);
       starService(context);
-    }).catch((a) => { })
+    });
   } else {
     starService(context);
   }
@@ -270,7 +275,7 @@ async function starServiceWithPort(cmd:string, jarPath:string, context: vscode.E
 }
 
 
-async function downloadJar(context: vscode.ExtensionContext): Promise<void> {
+async function downloadJar(context: vscode.ExtensionContext, progress: vscode.Progress<any>): Promise<void> {
   const httpCfg = vscode.workspace.getConfiguration("http");
   var agent
   if (httpCfg.proxy) {
@@ -294,12 +299,14 @@ async function downloadJar(context: vscode.ExtensionContext): Promise<void> {
     for (const asset of data.assets) {
       if (asset.name.match("^google-java-format-[0-9]+\.[0-9]+\.[0-9]+-all-deps.jar$")) {
         downloadUrl = asset.browser_download_url;
+        progress.report({ message: `found jar: ${asset.name}` });
         filePath = context.globalStorageUri.fsPath + sep + asset.name;
         break;
       }
     }
   } catch (error) {
-    vscode.window.showErrorMessage("fail to get google-java-format info");
+    vscode.window.showErrorMessage("fail to get google-java-format github info");
+    return Promise.reject();
   }
 
 
@@ -312,7 +319,11 @@ async function downloadJar(context: vscode.ExtensionContext): Promise<void> {
 
   if (downloadUrl) {
     try {
-      const response = await fetch(downloadUrl, { agent: agent });
+      setTimeout(() => {
+        progress.report({ message: "downloading jar file" });
+      }, 1000);
+
+      const response = await fetch(downloadUrl, { agent: agent, timeout: 20000});
 
       if (!response.ok) {
         const data = await response.text();

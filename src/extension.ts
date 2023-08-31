@@ -6,9 +6,11 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import * as net from "net";
 import * as cp from "child_process";
 import { delimiter, sep } from 'path'
-import { platform } from 'os'
+import { platform, tmpdir } from 'os'
 import * as glob from "fast-glob";
 import * as http from "http";
+import * as shortid from "shortid";
+
 
 const GOOGLE_JAVA_FORMAT_INFO_URL = "https://api.github.com/repos/google/google-java-format/releases/latest";
 const LOCAL_JAR_FILE = "google-java-format-service.jar";
@@ -88,7 +90,7 @@ export function deactivate() {
     if (platform() == 'win32') {
       cp.exec('taskkill /F /pid ' + PROCESS.pid);
     }else{
-      PROCESS.kill('SIGKILL');
+      PROCESS.kill('SIGTERM');
     }
     console.log(`kill process  : ${PROCESS.pid}`);
     PROCESS = null;
@@ -201,7 +203,7 @@ async function starService(context: vscode.ExtensionContext) {
   //try to startup with unix socket
   if (platform() != 'win32') {
     try {
-      const socketPath = context.globalStorageUri.fsPath + sep + SOCK_FILE_NAME;
+      const socketPath = tmpdir()+ sep+ shortid.generate() + ".sock";
 
       PROCESS = cp.spawn(cmd, ['-cp', jarPath,
         ...JAVA_EXPORT,
@@ -219,11 +221,11 @@ async function starService(context: vscode.ExtensionContext) {
         PROCESS.stderr.on('data', (data) => {
           console.log(`google java format: ${data}`);
         });
-        PROCESS.stderr.on('close', () => {
-          console.log("service with unix socket start failed, try to start service with random port");
-          SOCKET_PATH = null;
-          starServiceWithPort(cmd, jarPath, context);
-        });
+        // PROCESS.on('close', () => {
+        //   console.log("service with unix socket start failed, try to start service with random port");
+        //   SOCKET_PATH = null;
+        //   starServiceWithPort(cmd, jarPath, context);
+        // });
       }
 
       SOCKET_PATH = socketPath;

@@ -80,6 +80,7 @@
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.11.7",
     "@types/node-fetch": "^2.5.8",
+    "@types/shortid": "^0.0.29",
     "@types/vscode": "^1.54.0",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
@@ -94,6 +95,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "shortid": "^2.2.16",
     "ts-node": "^10.9.1"
   }
 }

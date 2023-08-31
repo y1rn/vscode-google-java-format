@@ -1,8 +1,8 @@
-# google-java-format
+# Java format service
 
 ## Features
 
-Startup as service and fully support of [google-java-format](https://github.com/google/google-java-format) plugin.
+Startup as service with support of [google-java-format](https://github.com/google/google-java-format) plugin.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ Do following configuration on settings.json after install:
 ```json
   "[java]": {
     //"editor.formatOnSave": true,
-    "editor.defaultFormatter": "y1rn.google-java-format",
+    "editor.defaultFormatter": "y1rn.java-format",
   },
 ```
 

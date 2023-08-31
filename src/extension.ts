@@ -10,11 +10,11 @@ import { platform, tmpdir } from 'os'
 import * as glob from "fast-glob";
 import * as http from "http";
 import * as shortid from "shortid";
+import { rejects } from "assert";
 
 
 const GOOGLE_JAVA_FORMAT_INFO_URL = "https://api.github.com/repos/google/google-java-format/releases/latest";
 const LOCAL_JAR_FILE = "google-java-format-service.jar";
-const NAME = 'y1rn.google-java-format';
 const JAVA_GLOB = `${sep}jre${sep}*${sep}bin${sep}java${(platform() == 'win32' ? ".exe" : "")}`;
 const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
                     '--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
@@ -25,24 +25,26 @@ const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNN
 var PROCESS: cp.ChildProcessWithoutNullStreams | null;
 var SOCKET_PATH:string | null;
 var SERVER_ADDR: string | null;
-
+var FORMATER_NAME: string;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+
+  FORMATER_NAME = (context as any)['extension'].id;
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   vscode.workspace.onDidChangeConfiguration(e => {
     const javaCfg = vscode.workspace.getConfiguration("[java]");
-    if (!!javaCfg && javaCfg['editor.defaultFormatter'] == NAME) {
-      startUp(context);
+    if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
+      startUp(context).catch();
     } else {
       deactivate();
     }
   })
   const javaCfg = vscode.workspace.getConfiguration("[java]");
-  if (!!javaCfg && javaCfg['editor.defaultFormatter'] == NAME) {
-    startUp(context);
+  if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
+    startUp(context).catch();
   }
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
@@ -66,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(disposable);
 }
 
-function startUp(context: vscode.ExtensionContext) {
+async function startUp(context: vscode.ExtensionContext): Promise<void> {
 
 
   if (!fs.existsSync(context.globalStorageUri.fsPath)) {
@@ -74,16 +76,19 @@ function startUp(context: vscode.ExtensionContext) {
   }
   const filePath = context.globalState.get<string>("google-java-format.jar-file");
   if (!filePath || filePath == "" || !fs.existsSync(filePath.toString())) {
-    vscode.window.withProgress({
-      location: vscode.ProgressLocation.Notification,
-      title: "Download File",
-      cancellable: false
-    }, async (progress) => {
-      await downloadJar(context, progress);
-      starService(context);
+    return new Promise((resolve, reject) => {
+      vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "google-java-format",
+        cancellable: false
+      }, (progress) => downloadJar(context, progress)
+        .catch(() => reject())
+        .then(() => starService(context)
+          .then(() => resolve())
+          .catch(() => reject())));
     });
   } else {
-    starService(context);
+    return starService(context);
   }
 }
 
@@ -297,7 +302,7 @@ async function downloadJar(context: vscode.ExtensionContext, progress: vscode.Pr
     for (const asset of data.assets) {
       if (asset.name.match("^google-java-format-[0-9]+\.[0-9]+\.[0-9]+-all-deps.jar$")) {
         downloadUrl = asset.browser_download_url;
-        progress.report({ message: `found jar: ${asset.name}` });
+        progress.report({ message: `found ${asset.name}` });
         filePath = context.globalStorageUri.fsPath + sep + asset.name;
         break;
       }
@@ -318,7 +323,7 @@ async function downloadJar(context: vscode.ExtensionContext, progress: vscode.Pr
   if (downloadUrl) {
     try {
       setTimeout(() => {
-        progress.report({ message: "downloading jar file" });
+        progress.report({ message: "downloading" });
       }, 1000);
 
       const response = await fetch(downloadUrl, { agent: agent, timeout: 20000});

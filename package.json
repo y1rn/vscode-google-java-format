@@ -1,10 +1,10 @@
 {
-  "name": "google-java-format",
-  "displayName": "google-java-format",
-  "description": "A faster Java formatter than those launching JVM everytime",
-  "version": "1.0.0",
+  "name": "java-format",
+  "displayName": "Java format service",
+  "description": "Java format service with google-java-format",
+  "version": "0.0.1",
   "engines": {
-    "vscode": "^1.54.0"
+    "vscode": "^1.65.0"
   },
   "license": "SEE LICENSE IN LICENSE",
   "categories": [
@@ -20,7 +20,7 @@
   "contributes": {
     "configuration": [
       {
-        "title": "Google Java Format Service",
+        "title": "Google Java Format",
         "properties": {
           "google-java-format.style": {
             "title": "The style name of google java format",

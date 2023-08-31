@@ -1,20 +1,18 @@
 package cn.gjfs;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-
 import com.google.googlejavaformat.java.Formatter;
 import com.google.googlejavaformat.java.ImportOrderer;
 import com.google.googlejavaformat.java.JavaFormatterOptions;
 import com.google.googlejavaformat.java.RemoveUnusedImports;
 import com.google.gson.Gson;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 public class GoogleFormatServlet extends HttpServlet {
 
@@ -43,20 +41,21 @@ public class GoogleFormatServlet extends HttpServlet {
       req = gson.fromJson(body, Request.class);
 
       JavaFormatterOptions options =
-        JavaFormatterOptions.builder()
-            .style(req.getStyleName().GetGoogleJavaFormatterStyle())
-            .build();
+          JavaFormatterOptions.builder()
+              .style(req.getStyleName().GetGoogleJavaFormatterStyle())
+              .build();
       String output = new Formatter(options).formatSource(req.getData());
       if (!req.isSkipRemovingUnusedImports()) {
         output = RemoveUnusedImports.removeUnusedImports(output);
       }
       if (!req.isSkipSortingImports()) {
-        output = ImportOrderer.reorderImports(output,req.getStyleName().GetGoogleJavaFormatterStyle());
+        output =
+            ImportOrderer.reorderImports(output, req.getStyleName().GetGoogleJavaFormatterStyle());
       }
 
       response.setStatus(HttpServletResponse.SC_OK);
       out.print(output);
-    }catch (Throwable ex) {
+    } catch (Throwable ex) {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       out.print(ex.getLocalizedMessage());
     } finally {

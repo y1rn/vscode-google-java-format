@@ -1,5 +1,6 @@
 package cn.gjfs;
 
+import com.google.common.base.Strings;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,8 +13,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.unixdomain.server.UnixDomainServerConnector;
 // import org.eclipse.jetty.util.component.LifeCycle;
-
-import com.google.common.base.Strings;
 
 public class App {
   public static void main(String[] args) throws Exception {
@@ -37,7 +36,7 @@ public class App {
       if (file.isDirectory()) {
         throw new IllegalArgumentException("socket file is a directory");
       } else {
-        Files.deleteIfExists(file.toPath()); 
+        Files.deleteIfExists(file.toPath());
       }
       server = new Server();
       // The number of acceptor threads.
@@ -45,29 +44,33 @@ public class App {
       // The number of selectors.
       int selectors = 1;
       // Create a ServerConnector instance.
-      UnixDomainServerConnector connector = new UnixDomainServerConnector(server, acceptors, selectors, new HttpConnectionFactory());
+      UnixDomainServerConnector connector =
+          new UnixDomainServerConnector(server, acceptors, selectors, new HttpConnectionFactory());
       connector.setInheritChannel(true);
       // The Unix-Domain path to listen to.
       connector.setUnixDomainPath(Path.of(unixSocketPath));
       // The TCP accept queue size.
       connector.setAcceptQueueSize(128);
       server.addConnector(connector);
-      Runtime.getRuntime().addShutdownHook(new Thread(()->{
-        try {
-          Files.deleteIfExists(file.toPath());
-        } catch (IOException e) {
-          e.printStackTrace();
-        } 
-      }));
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    try {
+                      Files.deleteIfExists(file.toPath());
+                    } catch (IOException e) {
+                      e.printStackTrace();
+                    }
+                  }));
       // server.addEventListener(new LifeCycle.Listener(){
       //   @Override
       //   public
       //   void lifeCycleStarted(LifeCycle event) {
-          
+
       //   }
       // });
 
-    }else {
+    } else {
       server = new Server(port);
     }
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);

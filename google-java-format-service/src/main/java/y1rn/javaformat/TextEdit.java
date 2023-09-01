@@ -8,9 +8,9 @@ import lombok.ToString;
 @ToString
 public class TextEdit {
   Range range;
-  String newText;
+  StringBuffer newText;
 
-  public TextEdit(String text, int startLine, int startChar, int endLine, int endChar) {
+  public TextEdit(StringBuffer text, int startLine, int startChar, int endLine, int endChar) {
 
     this.newText = text;
     Position starPosition = new Position(startLine, startChar);

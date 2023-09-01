@@ -10,8 +10,8 @@ import { platform, tmpdir } from 'os'
 import * as glob from "fast-glob";
 import * as http from "http";
 import * as shortid from "shortid";
-import { rejects } from "assert";
-
+import { parseJsonText } from "typescript";
+import { error } from "console";
 
 const GOOGLE_JAVA_FORMAT_INFO_URL = "https://api.github.com/repos/google/google-java-format/releases/latest";
 const LOCAL_JAR_FILE = "google-java-format-service.jar";
@@ -35,37 +35,56 @@ export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   vscode.workspace.onDidChangeConfiguration(e => {
-    const javaCfg = vscode.workspace.getConfiguration("[java]");
-    if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
-      startUp(context).catch();
-    } else {
-      deactivate();
+    if (e.affectsConfiguration('[java]')) {
+      const javaCfg = vscode.workspace.getConfiguration("[java]",null);
+      if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
+        startUp(context).catch();
+      } else {
+        deactivate();
+      }
     }
+
   })
-  const javaCfg = vscode.workspace.getConfiguration("[java]");
+  const javaCfg = vscode.workspace.getConfiguration("[java]", null);
   if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
     startUp(context).catch();
   }
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  let disposable = vscode.languages.registerDocumentRangeFormattingEditProvider(
-    { scheme: "file", language: "java" },
+  // let rangeFormatDispose = vscode.languages.registerDocumentRangeFormattingEditProvider(
+  //   { scheme:'file', language: 'java' },
+  //   {
+  //     provideDocumentRangeFormattingEdits(
+  //       document: vscode.TextDocument,
+  //       range: vscode.Range,
+  //       options: vscode.FormattingOptions,
+  //       token: vscode.CancellationToken
+  //     ): Promise<vscode.TextEdit[]> {
+  //       console.log(`run by registerDocumentRangeFormattingEditProvider`);
+
+  //       if (range.isEmpty) {
+  //         return Promise.resolve([]);
+  //       }
+  //       return getFormatCode(document, range);
+  //     },
+  //   },
+  // );
+
+  let formatDispose = vscode.languages.registerDocumentFormattingEditProvider(
+    { scheme: 'file', language: 'java' },
     {
-      provideDocumentRangeFormattingEdits(
+       async provideDocumentFormattingEdits(
         document: vscode.TextDocument,
-        range: vscode.Range,
         options: vscode.FormattingOptions,
         token: vscode.CancellationToken
-      ): Promise<vscode.TextEdit[]> {
-        if (range.isEmpty) {
-          return Promise.resolve([]);
-        }
-        return getResp(document, range);
-      },
+        ): Promise<vscode.TextEdit[]> {
+        return getFormatCode(document, undefined);
+      }
     }
   );
-  context.subscriptions.push(disposable);
+  // context.subscriptions.push(rangeFormatDispose);
+  context.subscriptions.push(formatDispose);
 }
 
 async function startUp(context: vscode.ExtensionContext): Promise<void> {
@@ -96,7 +115,8 @@ async function startUp(context: vscode.ExtensionContext): Promise<void> {
 export function deactivate() {
   if (PROCESS != null && !PROCESS.killed) {
     if (platform() == 'win32') {
-      cp.exec('taskkill /F /pid ' + PROCESS.pid);
+      // PROCESS.kill();
+      cp.exec(`taskkill /pid ${PROCESS.pid} /T /F`);
     }else{
       PROCESS.kill('SIGTERM');
     }
@@ -105,14 +125,14 @@ export function deactivate() {
   }
 }
 
-async function getResp(
+async function getFormatCode(
   document: vscode.TextDocument,
-  range: vscode.Range
+  range: vscode.Range | undefined
 ): Promise<vscode.TextEdit[]> {
   if (!PROCESS || !PROCESS.pid || PROCESS.killed ) {
     return Promise.reject([])
   }
-  const cfg = vscode.workspace.getConfiguration("google-java-format");
+  const cfg = vscode.workspace.getConfiguration("google-java-format", null);
  
   if (!!SERVER_ADDR) {
     if (!!SOCKET_PATH) {
@@ -125,8 +145,16 @@ async function getResp(
           });
           if (res.statusCode == 200) {
             res.on('data', data => {
-              console.log(data);
-              resolve([vscode.TextEdit.replace(range, data)]);
+              const res: vscode.TextEdit[] = [];
+              const arr = JSON.parse(data)
+              if (arr instanceof Array) {
+                arr.forEach((item: vscode.TextEdit) => {
+                  res.push(jsonToTextEdit(item));
+                });
+                resolve(res);
+              }else {
+                throw new Error(`incorrect response: ${data}`);
+              }
             });
           }else{
             reject([]);
@@ -171,19 +199,27 @@ async function getResp(
         method: "POST",
       });
 
-      const data = await response.text();
-
-      if (!response.ok || !data) {
+      if (!response.ok) {
+        const data = await response.text();
         vscode.window.showErrorMessage(data);
         return Promise.reject([]);
       }
-      return Promise.resolve([vscode.TextEdit.replace(range, data)]);
+
+      return response.json().then(data => {
+        const res:vscode.TextEdit[] = [];
+        if (data instanceof Array) {
+          data.forEach((item: vscode.TextEdit) => {
+            res.push(jsonToTextEdit(item));
+          });
+          return res;
+        }else{
+          throw new Error(`incorrect response: ${data}`);
+        }
+      })
     }
   
   }
   return Promise.reject([]);
-
-
 }
 
 async function starService(context: vscode.ExtensionContext) {
@@ -229,11 +265,6 @@ async function starService(context: vscode.ExtensionContext) {
         PROCESS.stderr.on('data', (data) => {
           console.log(`google java format: ${data}`);
         });
-        // PROCESS.on('close', () => {
-        //   console.log("service with unix socket start failed, try to start service with random port");
-        //   SOCKET_PATH = null;
-        //   starServiceWithPort(cmd, jarPath, context);
-        // });
       }
 
       SOCKET_PATH = socketPath;
@@ -279,7 +310,7 @@ async function starServiceWithPort(cmd:string, jarPath:string, context: vscode.E
 
 
 async function downloadJar(context: vscode.ExtensionContext, progress: vscode.Progress<any>): Promise<void> {
-  const httpCfg = vscode.workspace.getConfiguration("http");
+  const httpCfg = vscode.workspace.getConfiguration("http", null);
   var agent
   if (httpCfg.proxy) {
     agent = new HttpsProxyAgent(httpCfg.proxy);
@@ -360,4 +391,12 @@ async function getPortFree(): Promise<number> {
       });
     }
   })
+}
+
+function jsonToTextEdit(data: vscode.TextEdit): vscode.TextEdit{
+  const start: vscode.Position = new vscode.Position(data.range.start.line, data.range.start.character);
+  const end: vscode.Position = new vscode.Position(data.range.end.line, data.range.end.character);
+  const range: vscode.Range = new vscode.Range(start, end);
+  const te: vscode.TextEdit = new vscode.TextEdit(range, data.newText);
+  return te;
 }

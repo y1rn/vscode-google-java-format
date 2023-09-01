@@ -13,11 +13,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class GoogleFormatServlet extends HttpServlet {
 
   /** */
   private static final long serialVersionUID = 2834228695118524202L;
+
+  Gson gson = new Gson();
 
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -25,7 +28,6 @@ public class GoogleFormatServlet extends HttpServlet {
     response.setCharacterEncoding(StandardCharsets.UTF_8.name());
     response.setContentType("application/json");
 
-    Gson gson = new Gson();
     PrintWriter out = null;
     try {
       out = response.getWriter();
@@ -44,7 +46,8 @@ public class GoogleFormatServlet extends HttpServlet {
           JavaFormatterOptions.builder()
               .style(req.getStyleName().GetGoogleJavaFormatterStyle())
               .build();
-      String output = new Formatter(options).formatSource(req.getData());
+      String input = req.getData();
+      String output = new Formatter(options).formatSource(input);
       if (!req.isSkipRemovingUnusedImports()) {
         output = RemoveUnusedImports.removeUnusedImports(output);
       }
@@ -54,7 +57,11 @@ public class GoogleFormatServlet extends HttpServlet {
       }
 
       response.setStatus(HttpServletResponse.SC_OK);
-      out.print(output);
+      out.print(
+          gson.toJson(
+              Differ.getTextEdit(
+                  Arrays.asList(input.split("\n")), Arrays.asList(output.split("\n")))));
+      // out.print(output);
     } catch (Throwable ex) {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       out.print(ex.getLocalizedMessage());

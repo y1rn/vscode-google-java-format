@@ -38,7 +38,7 @@
           "google-java-format.skipSortingImports": {
             "title": "Whether to fix the import order, but unused imports will still be removed",
             "type": "boolean",
-            "default": true,
+            "default": false,
             "description": "Do not fix the import order. Unused imports will still be removed"
           },
           "google-java-format.skipRemovingUnusedImports": {
@@ -81,7 +81,7 @@
     "@types/node": "^12.11.7",
     "@types/node-fetch": "^2.5.8",
     "@types/shortid": "^0.0.29",
-    "@types/vscode": "^1.54.0",
+    "@types/vscode": "^1.65.0",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
     "eslint": "7.32",

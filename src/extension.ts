@@ -165,7 +165,7 @@ async function getFormatCode(
           try {
             const clientRequest = http.request({
               socketPath: SOCKET_PATH || "",
-              path: '/files',
+              path: '/format',
               headers: { "Content-Type": "application/json" },
               method: "POST",
             }, callback);
@@ -244,36 +244,37 @@ async function starService(context: vscode.ExtensionContext) {
   }
 
   const jarPath = `${localJarPath}${delimiter}${googleJarPath}`;
-  //try to startup with unix socket
-  if (platform() != 'win32') {
-    try {
-      const socketPath = tmpdir()+ sep+ shortid.generate() + ".sock";
+  
+  // //try to startup with unix socket
+  // if (platform() != 'win32') {
+  //   try {
+  //     const socketPath = tmpdir()+ sep+ shortid.generate() + ".sock";
 
-      PROCESS = cp.spawn(cmd, ['-cp', jarPath,
-        ...JAVA_EXPORT,
-        'y1rn.javaformat.App',
-        `-s=${socketPath}`
-      ], {
-        shell: false,
-        cwd: context.globalStorageUri.fsPath,
-      });
-      console.log("service start up with socket path: " + socketPath);
-      if (!!PROCESS) {
-        PROCESS.stdout.on('data', (data) => {
-          console.log(`google java format: ${data}`);
-        });
-        PROCESS.stderr.on('data', (data) => {
-          console.log(`google java format: ${data}`);
-        });
-      }
-
-      SOCKET_PATH = socketPath;
-      SERVER_ADDR = 'http://localhost'
-      return;
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  //     PROCESS = cp.spawn(cmd, ['-cp', jarPath,
+  //       ...JAVA_EXPORT,
+  //       'y1rn.javaformat.App',
+  //       `-s=${socketPath}`
+  //     ], {
+  //       shell: false,
+  //       cwd: context.globalStorageUri.fsPath,
+  //     });
+  //     console.log("service start up with socket path: " + socketPath);
+  //     if (!!PROCESS) {
+  //       PROCESS.stdout.on('data', (data) => {
+  //         console.log(`google java format: ${data}`);
+  //       });
+  //       PROCESS.stderr.on('data', (data) => {
+  //         console.log(`google java format: ${data}`);
+  //       });
+  //     }
+      
+  //     SOCKET_PATH = socketPath;
+  //     SERVER_ADDR = 'http://localhost'
+  //     return;
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }
  
   starServiceWithPort(cmd, jarPath,context);
 
@@ -293,7 +294,7 @@ async function starServiceWithPort(cmd:string, jarPath:string, context: vscode.E
     });
 
     console.log("service start up on port: " + port);
-    SERVER_ADDR = `http://localhost:${port}/files`
+    SERVER_ADDR = `http://localhost:${port}/format`
 
     if (!!PROCESS) {
       PROCESS.stdout.on('data', (data) => {

@@ -1,19 +1,15 @@
 package y1rn.javaformat;
 
 import com.google.common.base.Strings;
+
 import java.io.File;
-import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.unixdomain.server.UnixDomainServerConnector;
 
-// import org.eclipse.jetty.util.component.LifeCycle;
 
 public class App {
   public static void main(String[] args) throws Exception {
@@ -31,7 +27,7 @@ public class App {
       System.out.println(ex.getMessage());
       throw ex;
     }
-    Server server;
+    HttpServer server;
     if (!Strings.isNullOrEmpty(unixSocketPath)) {
       File file = new File(unixSocketPath);
       if (file.isDirectory()) {
@@ -39,46 +35,26 @@ public class App {
       } else {
         Files.deleteIfExists(file.toPath());
       }
-      server = new Server();
-      // The number of acceptor threads.
-      int acceptors = 1;
-      // The number of selectors.
-      int selectors = 1;
-      // Create a ServerConnector instance.
-      UnixDomainServerConnector connector =
-          new UnixDomainServerConnector(server, acceptors, selectors, new HttpConnectionFactory());
-      connector.setInheritChannel(true);
-      // The Unix-Domain path to listen to.
-      connector.setUnixDomainPath(Path.of(unixSocketPath));
-      // The TCP accept queue size.
-      connector.setAcceptQueueSize(128);
-      server.addConnector(connector);
-      Runtime.getRuntime()
-          .addShutdownHook(
-              new Thread(
-                  () -> {
-                    try {
-                      Files.deleteIfExists(file.toPath());
-                    } catch (IOException e) {
-                      e.printStackTrace();
-                    }
-                  }));
-      // server.addEventListener(new LifeCycle.Listener(){
-      //   @Override
-      //   public
-      //   void lifeCycleStarted(LifeCycle event) {
-
-      //   }
-      // });
-
-    } else {
-      server = new Server(port);
+      // File socketFile = new File(unixSocketPath);
+      // server =  HttpServer.create(afsa,0);
+      
+      // Runtime.getRuntime()
+      //     .addShutdownHook(
+      //         new Thread(
+      //             () -> {
+      //               try {
+      //                 Files.deleteIfExists(file.toPath());
+      //               } catch (IOException e) {
+      //                 e.printStackTrace();
+      //               }
+      //             }));
+    // } else {
+    //   server = HttpServer.create(new InetSocketAddress("0.0.0.0", port),0);
     }
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-    context.setContextPath("/");
-    context.addServlet(GoogleFormatServlet.class, "/files");
-    server.setHandler(context);
+      server = HttpServer.create(new InetSocketAddress("0.0.0.0", port),0);
+
+
+    server.createContext("/format",new FormatHandler());
     server.start();
-    server.join();
   }
 }

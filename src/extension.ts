@@ -125,10 +125,7 @@ export function deactivate() {
   }
 }
 
-async function getFormatCode(
-  document: vscode.TextDocument,
-  range: vscode.Range | undefined
-): Promise<vscode.TextEdit[]> {
+async function getFormatCode( document: vscode.TextDocument, range: vscode.Range | undefined): Promise<vscode.TextEdit[]> {
   if (!PROCESS || !PROCESS.pid || PROCESS.killed ) {
     return Promise.reject([])
   }
@@ -301,11 +298,13 @@ async function starServiceWithPort(cmd:string, jarPath:string, context: vscode.E
         console.log(`google java format: ${data}`);
       });
       PROCESS.stderr.on('data', (data) => {
-        console.log(`google java format: ${data}`);
+        console.log(data);
+        throw new Error(`start up service error: ${data}`);
       });
     }
   } catch (err) {
     console.log(err);
+    throw new Error(`start up service error: ${err}`);
   }
 }
 

@@ -2,7 +2,7 @@
   "name": "java-format",
   "displayName": "Java format service",
   "description": "Java format service with google-java-format",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.65.0"
   },
@@ -84,6 +84,7 @@
     "@types/vscode": "^1.65.0",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
+    "vscode-jsonrpc": "^8.1.0",
     "eslint": "7.32",
     "glob": "^7.1.6",
     "mocha": "^10.2.0",

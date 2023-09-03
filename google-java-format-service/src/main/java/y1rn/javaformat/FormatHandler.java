@@ -4,38 +4,27 @@ import com.google.googlejavaformat.java.Formatter;
 import com.google.googlejavaformat.java.ImportOrderer;
 import com.google.googlejavaformat.java.JavaFormatterOptions;
 import com.google.googlejavaformat.java.RemoveUnusedImports;
-import com.google.gson.Gson;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.List;
+import org.eclipse.lsp4j.jsonrpc.JsonRpcException;
+import org.eclipse.lsp4j.jsonrpc.MessageIssueException;
+import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler;
+import org.eclipse.lsp4j.jsonrpc.json.StreamMessageConsumer;
+import org.eclipse.lsp4j.jsonrpc.messages.Message;
+import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
-public class FormatHandler implements HttpHandler {
+public class FormatHandler extends StreamMessageConsumer {
 
-  Gson gson = new Gson();
+  public FormatHandler(OutputStream output, MessageJsonHandler jsonHandler) {
+    super(output, jsonHandler);
+  }
 
   @Override
-  public void handle(HttpExchange ex) throws IOException {
-    if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
-      ex.sendResponseHeaders(405, -1); // Method Not Allowed
-      ex.close();
-      throw new IOException("abc");
-    }
-
-    OutputStream out = null;
+  public void consume(Message message) throws MessageIssueException, JsonRpcException {
     try {
-      ex.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
-
-      out = ex.getResponseBody();
-
-      InputStream inputStream = ex.getRequestBody();
-      String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-
-      Request req = gson.fromJson(body, Request.class);
-
+      RequestMessage request = (RequestMessage) message;
+      Request req = (Request) request.getParams();
       JavaFormatterOptions options =
           JavaFormatterOptions.builder()
               .style(req.getStyleName().GetGoogleJavaFormatterStyle())
@@ -49,24 +38,15 @@ public class FormatHandler implements HttpHandler {
         output =
             ImportOrderer.reorderImports(output, req.getStyleName().GetGoogleJavaFormatterStyle());
       }
-      byte[] jsonData =
-          gson.toJson(
-                  Differ.getTextEdit(
-                      Arrays.asList(input.split("\n")), Arrays.asList(output.split("\n"))))
-              .getBytes(StandardCharsets.UTF_8);
-      ex.sendResponseHeaders(200, jsonData.length);
-      out.write(jsonData);
-    } catch (Throwable e) {
-      if (out != null) {
-        byte[] msg = e.getMessage().getBytes(StandardCharsets.UTF_8);
-        ex.sendResponseHeaders(400, msg.length);
-        out.write(msg);
-      }
+      List<TextEdit> respResult = Differ.getTextEdit(input, output);
 
-    } finally {
-      if (out != null) {
-        out.close();
-      }
+      ResponseMessage resp = new ResponseMessage();
+      resp.setId(Integer.parseInt(request.getId()));
+      resp.setResult(respResult);
+      super.consume(resp);
+
+    } catch (Exception e) {
+      throw new JsonRpcException(e);
     }
   }
 }

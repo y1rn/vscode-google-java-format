@@ -2,7 +2,7 @@
   "name": "java-format",
   "displayName": "Java format service",
   "description": "Java format service with google-java-format",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.65.0"
   },

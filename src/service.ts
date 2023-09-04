@@ -44,7 +44,7 @@ export async function startRPC(context: vscode.ExtensionContext): Promise<rpc.Me
         ...JAVA_EXPORT,
         'y1rn.javaformat.RPC',
       ], {
-        shell: true,
+        // shell: true,
         cwd: context.extensionPath,
       });
 

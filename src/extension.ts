@@ -17,8 +17,6 @@ interface formatRequestData {
 
 const FORMAT_REQUEST = new rpc.RequestType<formatRequestData, vscode.TextEdit[], void>("format");
 
-var SOCKET_PATH: string | null;
-var SERVER_ADDR: string | null;
 var FORMATER_NAME: string;
 var SP: Promise<rpc.MessageConnection> | null;
 
@@ -33,15 +31,17 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.workspace.onDidChangeConfiguration(e => {
     if (e.affectsConfiguration('[java]')) {
       const javaCfg = vscode.workspace.getConfiguration("[java]", null);
-      if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME && !SP) {
-        SP = startUp(context);
+      if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
+        if (!SP) {
+          SP = startUp(context)
+        }
       } else {
         deactivate();
       }
     }
   })
   const javaCfg = vscode.workspace.getConfiguration("[java]", null);
-  if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME && !SP) {
+  if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
     SP = startUp(context);
   }
   // The command has been defined in the package.json file
@@ -75,9 +75,12 @@ export function activate(context: vscode.ExtensionContext) {
         token: vscode.CancellationToken
       ): Promise<vscode.TextEdit[]> {
         if (!!SP) {
-          // return SP.then(() => getFormatCode(document, undefined))
-          return SP.then((connection) => doFormatCode(connection, document))
+          return SP.then((connection) => doFormatCode(connection, document)).catch(() => {
+            SP = startRPC(context)
+            return Promise.reject();
+          })
         } else {
+          // vscode.window.showErrorMessage("java format service not avaliable")
           return Promise.reject();
         }
       }
@@ -120,8 +123,8 @@ async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageCon
 export function deactivate() {
   // shutdown();
   SP?.then((connection) => {
-    connection.end();
     SP = null;
+    connection.end();
   });
 }
 

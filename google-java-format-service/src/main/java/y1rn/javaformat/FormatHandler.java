@@ -1,5 +1,6 @@
 package y1rn.javaformat;
 
+import com.google.googlejavaformat.Newlines;
 import com.google.googlejavaformat.java.Formatter;
 import com.google.googlejavaformat.java.ImportOrderer;
 import com.google.googlejavaformat.java.JavaFormatterOptions;
@@ -38,7 +39,8 @@ public class FormatHandler extends StreamMessageConsumer {
         output =
             ImportOrderer.reorderImports(output, req.getStyleName().GetGoogleJavaFormatterStyle());
       }
-      List<TextEdit> respResult = Differ.getTextEdit(input, output);
+      String sep = Newlines.guessLineSeparator(input);
+      List<TextEdit> respResult = Differ.getTextEdit(input, output, sep);
 
       ResponseMessage resp = new ResponseMessage();
       resp.setId(Integer.parseInt(request.getId()));

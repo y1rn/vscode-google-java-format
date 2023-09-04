@@ -8,5 +8,4 @@ public class Request {
   private String data;
   private boolean skipSortingImports;
   private boolean skipRemovingUnusedImports;
-  private boolean formatJavaDoc;
 }

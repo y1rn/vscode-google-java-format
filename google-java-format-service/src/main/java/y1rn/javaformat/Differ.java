@@ -3,76 +3,100 @@ package y1rn.javaformat;
 import com.github.difflib.DiffUtils;
 // import com.github.difflib.algorithm.myers.MeyersDiffWithLinearSpace;
 import com.github.difflib.patch.AbstractDelta;
-import com.github.difflib.patch.Chunk;
 import com.github.difflib.patch.Patch;
 import com.github.difflib.patch.PatchFailedException;
+
+import lombok.extern.java.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 // import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 
+@Log
 public class Differ {
 
-  static final String SEP = "\n";
   // static {
   //   DiffUtils.withDefaultDiffAlgorithmFactory(MeyersDiffWithLinearSpace.factory());
   // }
 
-  public static List<TextEdit> getTextEdit(String fileString1, String fileString2)
+  public static List<TextEdit> getTextEdit(String fileString1, String fileString2, String sep)
       throws PatchFailedException {
     return getTextEdit(
-        Arrays.asList(fileString1.split(SEP, -1)), Arrays.asList(fileString2.split(SEP, -1)));
+        Arrays.asList(fileString1.split(sep, -1)), Arrays.asList(fileString2.split(sep, -1)), sep);
   }
 
-  public static List<TextEdit> getTextEdit(List<String> file1, List<String> file2)
+  public static List<TextEdit> getTextEdit(List<String> file1, List<String> file2, String sep)
       throws PatchFailedException {
     List<TextEdit> edits = new ArrayList<>();
 
     Patch<String> patch = DiffUtils.diff(file1, file2);
     for (AbstractDelta<String> delta : patch.getDeltas()) {
+
+      log.info(()->{
+        if (log.isLoggable(Level.INFO)) {
+          return "type: " + delta.getType().toString();
+        }
+        return null;
+      });
+      log.info(()->{
+        if (log.isLoggable(Level.INFO)) {
+          return "source: " + delta.getSource().toString();
+        }
+        return null;
+      });
+
+      log.info(()->{
+        if (log.isLoggable(Level.INFO)) {
+          return "target: " + delta.getTarget().toString();
+        }
+        return null;
+      });
+
       String text = null;
-      int line = delta.getSource().getPosition();
-      int endLine;
+      int line = delta.getSource().getPosition() - 1;
+      int endLine = line + delta.getSource().size();
+      int startChar = file1.get(line).length();
+      int endChar = file1.get(endLine).length();
+
       switch (delta.getType()) {
         case DELETE:
-          // List<String> lines = delta.getSource().getLines();
-          // int endChar = lines.get(lines.size()-1).length();
-          endLine = line + delta.getSource().size();
           text = "";
-          edits.add(new TextEdit(text, line, 0, endLine, endLine >= file1.size()?1:0));
           break;
         case INSERT:
-      
-          text = toString(delta.getTarget().getLines(), SEP, line == file1.size());
-          edits.add(new TextEdit(text, line, 0, line, 0));
+          text = toString(delta.getTarget().getLines(), sep);
+          endLine = line;
           break;
         case CHANGE:
-          Chunk<String> source = delta.getSource();
-          endLine = line + source.size();
-          text = toString(delta.getTarget().getLines(), SEP, endLine == file1.size());
-          edits.add(new TextEdit(text, line, 0, endLine, 0));
+          text = toString(delta.getTarget().getLines(), sep);
           break;
         default:
-          break;
+          continue;
       }
+      edits.add(new TextEdit(text, line, startChar, endLine, endChar));
     }
+
+    log.info(()->{
+      if (log.isLoggable(Level.INFO)) {
+        return edits.toString();
+      }
+      return null;
+    });
     // Collections.reverse(edits);
     return edits;
   }
 
-  public static String toString(List<String> src, String sep, boolean includeEndOfLine) {
+  public static String toString(List<String> src, String sep) {
     if (src == null) {
       return null;
     }
-    if (!includeEndOfLine) {
-      StringBuffer rs = new StringBuffer();
-      for (String s : src) {
-        rs.append(s);
-        rs.append(sep);
-      }
-      return rs.toString();
+    StringBuffer rs = new StringBuffer();
+    for (String s : src) {
+      rs.append(sep);
+      rs.append(s);
     }
-    return String.join(sep, src);
+    return rs.toString();
   }
 }
 

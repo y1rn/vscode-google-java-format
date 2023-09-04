@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import lombok.extern.java.Log;
 import org.eclipse.lsp4j.jsonrpc.StandardLauncher;
@@ -45,8 +46,9 @@ public class RPC {
   public static void initLog() {
     // System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT.%1$tL %4$s [y1rn.java-format]: %5$s%n");
     System.setProperty("java.util.logging.SimpleFormatter.format", "[y1rn.java-format]: %5$s");
-    String logLevel = java.util.logging.Level.INFO.getName();
     LogManager lm = LogManager.getLogManager();
+    String logLevel = Level.WARNING.getName();
+    // String logLevel = Level.INFO.getName();
     try {
       lm.updateConfiguration(
           (k) ->
@@ -70,7 +72,7 @@ public class RPC {
                     return getValue(k, "java.util.logging.SimpleFormatter");
                   default:
                     String v = getValue(k, "java.util.logging.SimpleFormatter");
-                    return v == null ? n : v;
+                    return Strings.isNullOrEmpty(v) ? n : v;
                 }
               });
     } catch (IOException e) {

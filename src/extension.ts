@@ -11,7 +11,7 @@ import * as rpc from 'vscode-jsonrpc/node';
 interface formatRequestData {
   skipSortingImports: boolean,
   skipRemovingUnusedImports: boolean,
-  styleName: string,
+  style: string,
   data: string,
 }
 
@@ -75,10 +75,15 @@ export function activate(context: vscode.ExtensionContext) {
         token: vscode.CancellationToken
       ): Promise<vscode.TextEdit[]> {
         if (!!SP) {
-          return SP.then((connection) => doFormatCode(connection, document)).catch(() => {
-            SP = startRPC(context)
-            return Promise.reject();
-          })
+          return new Promise((resolve, reject) => {
+            SP?.then((connection) => {
+              resolve( doFormatCode(connection, document))
+            });
+            SP?.catch(() => {
+              SP = startUp(context)
+              reject();
+            });
+          });
         } else {
           // vscode.window.showErrorMessage("java format service not avaliable")
           return Promise.reject();
@@ -103,15 +108,25 @@ async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageCon
         location: vscode.ProgressLocation.Notification,
         title: "google-java-format",
         cancellable: false
-      }, (progress) => downloadGJF(context, progress)
-        .catch((err) => {
+      }, (progress) => {
+        let p = downloadGJF(context, progress);
+
+        p.then(async () => {
+          const connection = await startRPC(context);
+          resolve(connection);
+          return {
+            message:'download finish',
+            increment: 100,
+          }
+        });
+        
+        p.catch((err) => {
           console.error(err);
           reject();
+          return Promise.reject()
         })
-
-        .then(() => startRPC(context).then(connection => {
-          resolve(connection);
-        }))
+        return p;
+      }
       );
     });
   } else {
@@ -122,10 +137,18 @@ async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageCon
 // this method is called when your extension is deactivated
 export function deactivate() {
   // shutdown();
-  SP?.then((connection) => {
+  if (!!SP) {
+    SP.then((connection) => {
+      connection.end();
+      SP = null;
+    });
+    SP.catch(() => {
+      SP = null;
+    });
+  }else {
     SP = null;
-    connection.end();
-  });
+  }
+ 
 }
 
 async function doFormatCode(connection: rpc.MessageConnection, document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
@@ -133,7 +156,7 @@ async function doFormatCode(connection: rpc.MessageConnection, document: vscode.
   const data = <formatRequestData>{
     skipSortingImports: cfg.get("skipSortingImports"),
     skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
-    styleName: cfg.get("style"),
+    style: cfg.get("style"),
     data: document.getText(),
   }
   return connection.sendRequest(FORMAT_REQUEST, data).then(data => {

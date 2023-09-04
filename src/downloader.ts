@@ -21,6 +21,7 @@ export async function downloadGJF(context: vscode.ExtensionContext, progress: vs
       headers: { "Content-Type": "application/json" },
       method: "GET",
       agent: agent,
+      timeout: 5000,
     });
     if (!response.ok) {
       const data = await response.text();
@@ -28,7 +29,6 @@ export async function downloadGJF(context: vscode.ExtensionContext, progress: vs
       return Promise.reject();
     }
     const data = await response.json();
-
     for (const asset of data.assets) {
       if (asset.name.match("^google-java-format-[0-9]+\.[0-9]+\.[0-9]+-all-deps.jar$")) {
         downloadUrl = asset.browser_download_url;
@@ -38,7 +38,7 @@ export async function downloadGJF(context: vscode.ExtensionContext, progress: vs
       }
     }
   } catch (error) {
-    vscode.window.showErrorMessage("fail to get google-java-format github info");
+    vscode.window.showErrorMessage("fail to get google-java-format jar file info, try to set proxy with [http.proxy]");
     return Promise.reject();
   }
 
@@ -69,7 +69,7 @@ export async function downloadGJF(context: vscode.ExtensionContext, progress: vs
       context.globalState.update("google-java-format.jar-file", filePath);
       return Promise.resolve()
     } catch (error) {
-      vscode.window.showErrorMessage("fail to download google-java-format jar file");
+      vscode.window.showErrorMessage("fail to download google-java-format jar file, try to set proxy with [http.proxy]");
     }
   }
 

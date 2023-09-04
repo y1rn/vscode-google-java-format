@@ -28,7 +28,7 @@ public class FormatHandler extends StreamMessageConsumer {
       Request req = (Request) request.getParams();
       JavaFormatterOptions options =
           JavaFormatterOptions.builder()
-              .style(req.getStyleName().GetGoogleJavaFormatterStyle())
+              .style(req.getStyle())
               .build();
       String input = req.getData();
       String output = new Formatter(options).formatSource(input);
@@ -37,7 +37,7 @@ public class FormatHandler extends StreamMessageConsumer {
       }
       if (!req.isSkipSortingImports()) {
         output =
-            ImportOrderer.reorderImports(output, req.getStyleName().GetGoogleJavaFormatterStyle());
+            ImportOrderer.reorderImports(output, req.getStyle());
       }
       String sep = Newlines.guessLineSeparator(input);
       List<TextEdit> respResult = Differ.getTextEdit(input, output, sep);

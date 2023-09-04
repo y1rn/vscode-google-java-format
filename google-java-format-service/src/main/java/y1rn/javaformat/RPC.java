@@ -43,7 +43,9 @@ public class RPC {
   }
 
   public static void initLog() {
-    System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT %4$s: %5$s%n");
+    // System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT.%1$tL %4$s [y1rn.java-format]: %5$s%n");
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[y1rn.java-format]: %5$s");
+    String logLevel = java.util.logging.Level.INFO.getName();
     LogManager lm = LogManager.getLogManager();
     try {
       lm.updateConfiguration(
@@ -51,11 +53,16 @@ public class RPC {
               (o, n) -> {
                 switch (k) {
                   case ".level":
-                    return getValue(k, "OFF");
+                    // return getValue(k, "OFF");
+                    return getValue(k, logLevel);
                   case "handlers":
-                    return getValue(k, "java.util.logging.FileHandler");
+                    return getValue(k, "java.util.logging.ConsoleHandler");
                   case "java.util.logging.FileHandler.encoding":
                     return getValue(k, "UTF-8");
+                  case "java.util.logging.ConsoleHandler.encoding":
+                    return getValue(k, "UTF-8");
+                  case "java.util.logging.ConsoleHandler.level":
+                    return getValue(k, logLevel);
                   case "java.util.logging.FileHandler.pattern":
                     return getValue(
                         k, System.getProperty("java.io.tmpdir") + File.separator + "rpc.log");

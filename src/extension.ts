@@ -1,8 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from "vscode";
-import fetch from "node-fetch";
 import * as fs from "fs";
-import * as http from "http";
 import { jsonToTextEdit } from './utils';
 import { downloadGJF } from './downloader';
 import { startRPC } from './service';

@@ -26,18 +26,14 @@ public class FormatHandler extends StreamMessageConsumer {
     try {
       RequestMessage request = (RequestMessage) message;
       Request req = (Request) request.getParams();
-      JavaFormatterOptions options =
-          JavaFormatterOptions.builder()
-              .style(req.getStyle())
-              .build();
+      JavaFormatterOptions options = JavaFormatterOptions.builder().style(req.getStyle()).build();
       String input = req.getData();
       String output = new Formatter(options).formatSource(input);
       if (!req.isSkipRemovingUnusedImports()) {
         output = RemoveUnusedImports.removeUnusedImports(output);
       }
       if (!req.isSkipSortingImports()) {
-        output =
-            ImportOrderer.reorderImports(output, req.getStyle());
+        output = ImportOrderer.reorderImports(output, req.getStyle());
       }
       String sep = Newlines.guessLineSeparator(input);
       List<TextEdit> respResult = Differ.getTextEdit(input, output, sep);
@@ -52,4 +48,3 @@ public class FormatHandler extends StreamMessageConsumer {
     }
   }
 }
-

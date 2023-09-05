@@ -7,6 +7,7 @@ import lombok.ToString;
 @Data
 @ToString
 public class TextEdit {
+
   Range range;
   String newText;
 

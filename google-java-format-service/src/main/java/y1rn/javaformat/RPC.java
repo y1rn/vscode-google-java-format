@@ -44,7 +44,8 @@ public class RPC {
   }
 
   public static void initLog() {
-    // System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT.%1$tL %4$s [y1rn.java-format]: %5$s%n");
+    // System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF
+    // %1$tT.%1$tL %4$s [y1rn.java-format]: %5$s%n");
     System.setProperty("java.util.logging.SimpleFormatter.format", "[y1rn.java-format]: %5$s");
     LogManager lm = LogManager.getLogManager();
     String logLevel = Level.WARNING.getName();
@@ -88,4 +89,3 @@ public class RPC {
     return Strings.isNullOrEmpty(v) ? def : v;
   }
 }
-

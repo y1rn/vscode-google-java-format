@@ -5,14 +5,12 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.Patch;
 import com.github.difflib.patch.PatchFailedException;
-
-import lombok.extern.java.Log;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 // import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import lombok.extern.java.Log;
 
 @Log
 public class Differ {
@@ -34,25 +32,28 @@ public class Differ {
     Patch<String> patch = DiffUtils.diff(file1, file2);
     for (AbstractDelta<String> delta : patch.getDeltas()) {
 
-      log.info(()->{
-        if (log.isLoggable(Level.INFO)) {
-          return "type: " + delta.getType().toString();
-        }
-        return null;
-      });
-      log.info(()->{
-        if (log.isLoggable(Level.INFO)) {
-          return "source: " + delta.getSource().toString();
-        }
-        return null;
-      });
+      log.info(
+          () -> {
+            if (log.isLoggable(Level.INFO)) {
+              return "type: " + delta.getType().toString();
+            }
+            return null;
+          });
+      log.info(
+          () -> {
+            if (log.isLoggable(Level.INFO)) {
+              return "source: " + delta.getSource().toString();
+            }
+            return null;
+          });
 
-      log.info(()->{
-        if (log.isLoggable(Level.INFO)) {
-          return "target: " + delta.getTarget().toString();
-        }
-        return null;
-      });
+      log.info(
+          () -> {
+            if (log.isLoggable(Level.INFO)) {
+              return "target: " + delta.getTarget().toString();
+            }
+            return null;
+          });
 
       String text = null;
       int line = delta.getSource().getPosition() - 1;
@@ -77,12 +78,13 @@ public class Differ {
       edits.add(new TextEdit(text, line, startChar, endLine, endChar));
     }
 
-    log.info(()->{
-      if (log.isLoggable(Level.INFO)) {
-        return edits.toString();
-      }
-      return null;
-    });
+    log.info(
+        () -> {
+          if (log.isLoggable(Level.INFO)) {
+            return edits.toString();
+          }
+          return null;
+        });
     // Collections.reverse(edits);
     return edits;
   }
@@ -99,4 +101,3 @@ public class Differ {
     return rs.toString();
   }
 }
-

@@ -1,13 +1,11 @@
 package y1rn.javaformat;
 
 import com.github.difflib.DiffUtils;
-// import com.github.difflib.algorithm.myers.MeyersDiffWithLinearSpace;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.Patch;
 import com.github.difflib.patch.PatchFailedException;
 import java.util.ArrayList;
 import java.util.Arrays;
-// import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
@@ -15,9 +13,7 @@ import lombok.extern.java.Log;
 @Log
 public class Differ {
 
-  // static {
-  //   DiffUtils.withDefaultDiffAlgorithmFactory(MeyersDiffWithLinearSpace.factory());
-  // }
+  private Differ() {}
 
   public static List<TextEdit> getTextEdit(String fileString1, String fileString2, String sep)
       throws PatchFailedException {
@@ -85,7 +81,6 @@ public class Differ {
           }
           return null;
         });
-    // Collections.reverse(edits);
     return edits;
   }
 
@@ -93,7 +88,7 @@ public class Differ {
     if (src == null) {
       return null;
     }
-    StringBuffer rs = new StringBuffer();
+    StringBuilder rs = new StringBuilder();
     for (String s : src) {
       rs.append(sep);
       rs.append(s);
@@ -101,3 +96,4 @@ public class Differ {
     return rs.toString();
   }
 }
+

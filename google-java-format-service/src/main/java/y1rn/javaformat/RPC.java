@@ -33,30 +33,23 @@ public class RPC {
             mjh,
             (Message message, List<MessageIssue> issues) -> {
               log.severe(message.toString());
-              issues.forEach(
-                  issue -> {
-                    log.severe(issue.getCause().getMessage());
-                  });
+              issues.forEach(issue -> log.severe(issue.getCause().getMessage()));
             });
     FormatHandler fh = new FormatHandler(System.out, mjh);
-    StandardLauncher<Void> launcher = new StandardLauncher<Void>(smp, fh, es, null, null);
+    StandardLauncher<Void> launcher = new StandardLauncher(smp, fh, es, null, null);
     launcher.startListening();
   }
 
   public static void initLog() {
-    // System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF
-    // %1$tT.%1$tL %4$s [y1rn.java-format]: %5$s%n");
     System.setProperty("java.util.logging.SimpleFormatter.format", "[y1rn.java-format]: %5$s");
     LogManager lm = LogManager.getLogManager();
     String logLevel = Level.WARNING.getName();
-    // String logLevel = Level.INFO.getName();
     try {
       lm.updateConfiguration(
-          (k) ->
+          k ->
               (o, n) -> {
                 switch (k) {
                   case ".level":
-                    // return getValue(k, "OFF");
                     return getValue(k, logLevel);
                   case "handlers":
                     return getValue(k, "java.util.logging.ConsoleHandler");
@@ -89,3 +82,4 @@ public class RPC {
     return Strings.isNullOrEmpty(v) ? def : v;
   }
 }
+

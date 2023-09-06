@@ -28,29 +28,6 @@ public class Differ {
     Patch<String> patch = DiffUtils.diff(file1, file2);
     for (AbstractDelta<String> delta : patch.getDeltas()) {
 
-      log.info(
-          () -> {
-            if (log.isLoggable(Level.INFO)) {
-              return "type: " + delta.getType().toString();
-            }
-            return null;
-          });
-      log.info(
-          () -> {
-            if (log.isLoggable(Level.INFO)) {
-              return "source: " + delta.getSource().toString();
-            }
-            return null;
-          });
-
-      log.info(
-          () -> {
-            if (log.isLoggable(Level.INFO)) {
-              return "target: " + delta.getTarget().toString();
-            }
-            return null;
-          });
-
       String text = null;
       int line = delta.getSource().getPosition() - 1;
       int endLine = line + delta.getSource().size();

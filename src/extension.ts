@@ -6,11 +6,17 @@ import { downloadGJF } from './downloader';
 import { startRPC } from './service';
 import * as rpc from 'vscode-jsonrpc/node';
 
+interface formatRange{
+  start: number,
+  end: number,
+
+}
 interface formatRequestData {
   skipSortingImports: boolean,
   skipRemovingUnusedImports: boolean,
   style: string,
   data: string,
+  range: formatRange,
 }
 
 const FORMAT_REQUEST = new rpc.RequestType<formatRequestData, vscode.TextEdit[], void>("format");
@@ -42,27 +48,33 @@ export function activate(context: vscode.ExtensionContext) {
   if (!!javaCfg && javaCfg['editor.defaultFormatter'] == FORMATER_NAME) {
     SP = startUp(context);
   }
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-  // let rangeFormatDispose = vscode.languages.registerDocumentRangeFormattingEditProvider(
-  //   { scheme:'file', language: 'java' },
-  //   {
-  //     provideDocumentRangeFormattingEdits(
-  //       document: vscode.TextDocument,
-  //       range: vscode.Range,
-  //       options: vscode.FormattingOptions,
-  //       token: vscode.CancellationToken
-  //     ): Promise<vscode.TextEdit[]> {
-  //       console.log(`run by registerDocumentRangeFormattingEditProvider`);
 
-  //       if (range.isEmpty) {
-  //         return Promise.resolve([]);
-  //       }
-  //       return getFormatCode(document, range);
-  //     },
-  //   },
-  // );
+  let rangeFormatDispose = vscode.languages.registerDocumentRangeFormattingEditProvider(
+    { scheme:'file', language: 'java' },
+    {
+      provideDocumentRangeFormattingEdits(
+        document: vscode.TextDocument,
+        range: vscode.Range,
+        options: vscode.FormattingOptions,
+        token: vscode.CancellationToken
+      ): Promise<vscode.TextEdit[]> {
+        if (!!SP) {
+          return new Promise((resolve, reject) => {
+            SP?.then((connection) => {
+              resolve( doFormatCode(connection, document, range))
+            });
+            SP?.catch(() => {
+              SP = startUp(context)
+              reject();
+            });
+          });
+        } else {
+          // vscode.window.showErrorMessage("java format service not avaliable")
+          return Promise.reject();
+        }
+      },
+    },
+  );
 
   let formatDispose = vscode.languages.registerDocumentFormattingEditProvider(
     { scheme: 'file', language: 'java' },
@@ -89,7 +101,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
   );
-  // context.subscriptions.push(rangeFormatDispose);
+  context.subscriptions.push(rangeFormatDispose);
   context.subscriptions.push(formatDispose);
 }
 
@@ -149,13 +161,21 @@ export function deactivate() {
  
 }
 
-async function doFormatCode(connection: rpc.MessageConnection, document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
+async function doFormatCode(connection: rpc.MessageConnection, document: vscode.TextDocument, range?: vscode.Range): Promise<vscode.TextEdit[]> {
   const cfg = vscode.workspace.getConfiguration("google-java-format", null);
+  let r: formatRange | undefined = undefined;
+  if (!!range) {
+    r = <formatRange> {
+      start: range.start.line,
+      end: range.end.line,
+    }
+  }
   const data = <formatRequestData>{
     skipSortingImports: cfg.get("skipSortingImports"),
     skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
     style: cfg.get("style"),
     data: document.getText(),
+    range: r,
   }
   return connection.sendRequest(FORMAT_REQUEST, data).then(data => {
     const res: vscode.TextEdit[] = [];

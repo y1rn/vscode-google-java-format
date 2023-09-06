@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as net from "net";
 
 
-export function jsonToTextEdit(data: vscode.TextEdit): vscode.TextEdit{
+export function JsonToTextEdit(data: vscode.TextEdit): vscode.TextEdit{
   const start: vscode.Position = new vscode.Position(data.range.start.line, data.range.start.character);
   const end: vscode.Position = new vscode.Position(data.range.end.line, data.range.end.character);
   const range: vscode.Range = new vscode.Range(start, end);

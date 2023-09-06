@@ -36,7 +36,7 @@ public class RPC {
               issues.forEach(issue -> log.severe(issue.getCause().getMessage()));
             });
     FormatHandler fh = new FormatHandler(System.out, mjh);
-    StandardLauncher<Void> launcher = new StandardLauncher(smp, fh, es, null, null);
+    StandardLauncher<Void> launcher = new StandardLauncher<>(smp, fh, es, null, null);
     launcher.startListening();
   }
 

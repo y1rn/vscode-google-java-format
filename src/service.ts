@@ -17,7 +17,7 @@ const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNN
                     '--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'];
 
 
-export async function startRPC(context: vscode.ExtensionContext): Promise<rpc.MessageConnection> {
+export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.MessageConnection> {
 
   const googleJarPath = context.globalState.get("google-java-format.jar-file");
   if (!googleJarPath) {

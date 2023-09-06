@@ -1,10 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
-import * as vscode from "vscode";
 import * as fs from "fs";
-import { jsonToTextEdit } from './utils';
-import { downloadGJF } from './downloader';
-import { startRPC } from './service';
+import * as vscode from "vscode";
 import * as rpc from 'vscode-jsonrpc/node';
+import { DownloadGJF } from './downloader';
+import { StartRPC } from './service';
+import { JsonToTextEdit } from './utils';
 
 interface formatRange{
   start: number,
@@ -101,8 +101,11 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
   );
+
+
   context.subscriptions.push(rangeFormatDispose);
   context.subscriptions.push(formatDispose);
+  
 }
 
 async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageConnection> {
@@ -119,10 +122,10 @@ async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageCon
         title: "google-java-format",
         cancellable: false
       }, (progress) => {
-        let p = downloadGJF(context, progress);
+        let p = DownloadGJF(context, progress);
 
         p.then(async () => {
-          const connection = await startRPC(context);
+          const connection = await StartRPC(context);
           resolve(connection);
           return {
             message:'download finish',
@@ -140,7 +143,7 @@ async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageCon
       );
     });
   } else {
-    return startRPC(context);
+    return StartRPC(context);
   }
 }
 
@@ -181,7 +184,7 @@ async function doFormatCode(connection: rpc.MessageConnection, document: vscode.
     const res: vscode.TextEdit[] = [];
     if (data instanceof Array) {
       data.forEach((item: vscode.TextEdit) => {
-        res.push(jsonToTextEdit(item));
+        res.push(JsonToTextEdit(item));
       });
       return res;
     } else {

@@ -8,7 +8,7 @@ import { sep } from 'path'
 const GOOGLE_JAVA_FORMAT_INFO_URL = "https://api.github.com/repos/google/google-java-format/releases/latest";
 
 
-export async function downloadGJF(context: vscode.ExtensionContext, progress: vscode.Progress<any>): Promise<void> {
+export async function DownloadGJF(context: vscode.ExtensionContext, progress: vscode.Progress<any>): Promise<void> {
   const httpCfg = vscode.workspace.getConfiguration("http", null);
   var agent
   if (httpCfg.proxy) {

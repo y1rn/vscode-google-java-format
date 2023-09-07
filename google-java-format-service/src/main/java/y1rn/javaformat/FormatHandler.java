@@ -21,6 +21,7 @@ import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler;
 import org.eclipse.lsp4j.jsonrpc.json.StreamMessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.messages.Message;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
 @Log
@@ -32,16 +33,18 @@ public class FormatHandler extends StreamMessageConsumer {
 
   @Override
   public void consume(Message message) throws MessageIssueException, JsonRpcException {
+    RequestMessage request = (RequestMessage) message;
+    Request req = (Request) request.getParams();
+    String requestId = request.getId();
+    List<TextEdit> respResult = null;
+    log.info(
+      () -> {
+        if (log.isLoggable(Level.INFO)) {
+          return "request: " + req.toString();
+        }
+        return null;
+      });
     try {
-      RequestMessage request = (RequestMessage) message;
-      Request req = (Request) request.getParams();
-      log.info(
-          () -> {
-            if (log.isLoggable(Level.INFO)) {
-              return "request: " + req.toString();
-            }
-            return null;
-          });
       JavaFormatterOptions options = JavaFormatterOptions.builder().style(req.getStyle()).build();
       String input = req.getData();
       Formatter formatter= new Formatter(options);
@@ -59,17 +62,18 @@ public class FormatHandler extends StreamMessageConsumer {
           output = ImportOrderer.reorderImports(output, req.getStyle());
         }
       }
-    
       String sep = Newlines.guessLineSeparator(input);
-      List<TextEdit> respResult = Differ.getTextEdit(input, output, sep);
-
-      ResponseMessage resp = new ResponseMessage();
-      resp.setId(Integer.parseInt(request.getId()));
-      resp.setResult(respResult);
-      super.consume(resp);
-
+      respResult = Differ.getTextEdit(input, output, sep);
     } catch (Exception e) {
+      ResponseMessage resp = new ResponseMessage();
+      resp.setId(Integer.parseInt(requestId));
+      resp.setError(new ResponseError(0, e.getMessage(), null));
+      super.consume(resp);
       throw new JsonRpcException(e);
     }
+    ResponseMessage resp = new ResponseMessage();
+    resp.setId(Integer.parseInt(requestId));
+    resp.setResult(respResult);
+    super.consume(resp);
   }
 }

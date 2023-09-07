@@ -43,7 +43,7 @@ public class RPC {
   public static void initLog() {
     System.setProperty("java.util.logging.SimpleFormatter.format", "[y1rn.java-format]: %5$s");
     LogManager lm = LogManager.getLogManager();
-    String logLevel = Level.WARNING.getName();
+    String logLevel = Level.OFF.getName();
     try {
       lm.updateConfiguration(
           k ->

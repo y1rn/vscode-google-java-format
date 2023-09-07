@@ -8,13 +8,10 @@ import com.google.googlejavaformat.java.Formatter;
 import com.google.googlejavaformat.java.ImportOrderer;
 import com.google.googlejavaformat.java.JavaFormatterOptions;
 import com.google.googlejavaformat.java.RemoveUnusedImports;
-
-import lombok.extern.java.Log;
-
 import java.io.OutputStream;
 import java.util.List;
 import java.util.logging.Level;
-
+import lombok.extern.java.Log;
 import org.eclipse.lsp4j.jsonrpc.JsonRpcException;
 import org.eclipse.lsp4j.jsonrpc.MessageIssueException;
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler;
@@ -38,20 +35,24 @@ public class FormatHandler extends StreamMessageConsumer {
     String requestId = request.getId();
     List<TextEdit> respResult = null;
     log.info(
-      () -> {
-        if (log.isLoggable(Level.INFO)) {
-          return "request: " + req.toString();
-        }
-        return null;
-      });
+        () -> {
+          if (log.isLoggable(Level.INFO)) {
+            return "request: " + req.toString();
+          }
+          return null;
+        });
     try {
       JavaFormatterOptions options = JavaFormatterOptions.builder().style(req.getStyle()).build();
       String input = req.getData();
-      Formatter formatter= new Formatter(options);
+      Formatter formatter = new Formatter(options);
       String output = null;
       if (req.getRange() != null) {
-        RangeSet<Integer> range = Formatter.lineRangesToCharRanges(input,ImmutableRangeSet.of(Range.openClosed(req.getRange().getStart(), req.getRange().getEnd())));
-        output = formatter.formatSource(input,range.asRanges());
+        RangeSet<Integer> range =
+            Formatter.lineRangesToCharRanges(
+                input,
+                ImmutableRangeSet.of(
+                    Range.openClosed(req.getRange().getStart(), req.getRange().getEnd())));
+        output = formatter.formatSource(input, range.asRanges());
       } else {
         output = formatter.formatSource(input);
 
@@ -67,7 +68,7 @@ public class FormatHandler extends StreamMessageConsumer {
     } catch (Exception e) {
       ResponseMessage resp = new ResponseMessage();
       resp.setId(Integer.parseInt(requestId));
-      resp.setError(new ResponseError(0, e.getMessage(), null));
+      resp.setError(new ResponseError(400, e.getMessage(), null));
       super.consume(resp);
       throw new JsonRpcException(e);
     }
@@ -77,3 +78,4 @@ public class FormatHandler extends StreamMessageConsumer {
     super.consume(resp);
   }
 }
+

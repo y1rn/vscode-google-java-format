@@ -20,7 +20,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.MessageIssue;
 @Log
 public class RPC {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     initLog();
     ExecutorService es = Executors.newCachedThreadPool();
     Map<String, JsonRpcMethod> mm =

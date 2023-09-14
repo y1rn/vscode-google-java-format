@@ -15,6 +15,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <output>target</output>
+    <execoutput>.</execoutput>
   </properties>
 
   <dependencies>
@@ -28,7 +29,6 @@
       <groupId>com.google.googlejavaformat</groupId>
       <artifactId>google-java-format</artifactId>
       <version>1.17.0</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -61,13 +61,6 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.5.0</version>
         <configuration>
-          <dependencyReducedPomLocation>${basedir}/target/dependency-reduced-pom.xml</dependencyReducedPomLocation>
-          <artifactSet>
-              <excludes>
-                  <exclude>com.google.googlejavaformat:google-java-format</exclude>
-              </excludes>
-          </artifactSet>
-          <minimizeJar>true</minimizeJar>
           <filters>
             <filter>
               <artifact>*:*</artifact>
@@ -103,4 +96,42 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>native</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+            <extensions>true</extensions>
+            <executions>
+              <execution>
+                <id>build-native</id>
+                <goals>
+                  <goal>compile-no-fork</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+            <configuration>
+              <buildArgs>
+                  <arg>-march=native</arg>
+                  <arg>--gc=G1</arg>
+                  <arg>-Ob</arg>
+                  <arg>-J-Xlog:jni+resolve=off</arg>
+                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                  <arg>-o ${execoutput}/${project.artifactId}</arg>
+              </buildArgs>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

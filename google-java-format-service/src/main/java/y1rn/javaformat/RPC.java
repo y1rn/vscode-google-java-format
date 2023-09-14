@@ -25,25 +25,33 @@ public class RPC {
     ExecutorService es = Executors.newCachedThreadPool();
     Map<String, JsonRpcMethod> mm =
         Map.of("format", JsonRpcMethod.request("format", List.class, Request.class));
-
+    new Request();
+    Request.class.getConstructors();
     MessageJsonHandler mjh = new MessageJsonHandler(mm);
+    FormatHandler fh = new FormatHandler(System.out, mjh);
+
     StreamMessageProducer smp =
         new StreamMessageProducer(
             System.in,
             mjh,
             (Message message, List<MessageIssue> issues) -> {
+              fh.writeResponse(message);
               log.severe(message.toString());
               issues.forEach(issue -> log.severe(issue.getCause().getMessage()));
             });
-    FormatHandler fh = new FormatHandler(System.out, mjh);
     StandardLauncher<Void> launcher = new StandardLauncher<>(smp, fh, es, null, null);
     launcher.startListening();
   }
 
   public static void initLog() {
-    System.setProperty("java.util.logging.SimpleFormatter.format", "[y1rn.java-format]: %5$s");
+
     LogManager lm = LogManager.getLogManager();
     String logLevel = Level.OFF.getName();
+
+    if (System.getProperty("java.home") == null) {
+      return;
+    }
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[y1rn.java-format]: %5$s");
     try {
       lm.updateConfiguration(
           k ->

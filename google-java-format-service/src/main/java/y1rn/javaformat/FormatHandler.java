@@ -77,5 +77,9 @@ public class FormatHandler extends StreamMessageConsumer {
     resp.setResult(respResult);
     super.consume(resp);
   }
+
+  public void writeResponse(Message message){
+    super.consume(message);
+  }
 }
 

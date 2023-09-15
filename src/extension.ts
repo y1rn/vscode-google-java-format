@@ -20,6 +20,7 @@ interface formatRequestData {
 }
 
 const FORMAT_REQUEST = new rpc.RequestType<formatRequestData, vscode.TextEdit[], void>("format");
+const EXIT_NOTIFICATION = new rpc.NotificationType0("exit");
 
 let FORMATER_NAME: string;
 let SP: Promise<rpc.MessageConnection> | null;
@@ -153,19 +154,17 @@ async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageCon
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-  // shutdown();
-  if (!!SP) {
-    SP.then((connection) => {
-      connection.end();
-      SP = null;
-    });
-    SP.catch(() => {
-      SP = null;
-    });
-  }else {
+  SP?.then((connection) => {
+    // connection.sendNotification(EXIT_NOTIFICATION);
+    connection.end();
+    SP = null;
+  });
+  SP?.catch(() => {
+    SP = null;
+  });
+  if (!SP) {
     SP = null;
   }
- 
 }
 
 async function doFormatCode(connection: rpc.MessageConnection, document: vscode.TextDocument, range?: vscode.Range): Promise<vscode.TextEdit[]> {

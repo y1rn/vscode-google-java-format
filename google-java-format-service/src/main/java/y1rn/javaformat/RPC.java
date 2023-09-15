@@ -24,7 +24,10 @@ public class RPC {
     initLog();
     ExecutorService es = Executors.newCachedThreadPool();
     Map<String, JsonRpcMethod> mm =
-        Map.of("format", JsonRpcMethod.request("format", List.class, Request.class));
+        Map.of(
+          FormatHandler.METHOD_FORMAT, JsonRpcMethod.request(FormatHandler.METHOD_FORMAT, List.class, Request.class),
+          FormatHandler.METHOD_EXIT, JsonRpcMethod.notification(FormatHandler.METHOD_EXIT)
+        );
     new Request();
     Request.class.getConstructors();
     MessageJsonHandler mjh = new MessageJsonHandler(mm);

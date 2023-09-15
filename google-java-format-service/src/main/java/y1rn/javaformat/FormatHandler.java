@@ -23,6 +23,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
 @Log
 public class FormatHandler extends StreamMessageConsumer {
+  static final String METHOD_FORMAT = "format";
+  static final String METHOD_EXIT = "exit";
 
   public FormatHandler(OutputStream output, MessageJsonHandler jsonHandler) {
     super(output, jsonHandler);
@@ -31,6 +33,32 @@ public class FormatHandler extends StreamMessageConsumer {
   @Override
   public void consume(Message message) throws MessageIssueException, JsonRpcException {
     RequestMessage request = (RequestMessage) message;
+    ResponseMessage resp;
+    switch (request.getMethod()) {
+      case METHOD_FORMAT:
+        handleFormat(request);
+
+        break;
+      case METHOD_EXIT:
+        resp = new ResponseMessage();
+        resp.setId(Integer.parseInt(request.getId()));
+        resp.setResult("ok");
+        super.consume(resp);
+        System.exit(0);
+        break;
+      default:
+        resp = new ResponseMessage();
+        resp.setId(Integer.parseInt(request.getId()));
+        super.consume(resp);
+        break;
+    }
+  }
+
+  public void writeResponse(Message message) {
+    super.consume(message);
+  }
+
+  private void handleFormat(RequestMessage request) {
     Request req = (Request) request.getParams();
     String requestId = request.getId();
     List<TextEdit> respResult = null;
@@ -77,9 +105,4 @@ public class FormatHandler extends StreamMessageConsumer {
     resp.setResult(respResult);
     super.consume(resp);
   }
-
-  public void writeResponse(Message message){
-    super.consume(message);
-  }
 }
-

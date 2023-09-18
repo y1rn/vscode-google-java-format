@@ -29,10 +29,16 @@ public class Differ {
     for (AbstractDelta<String> delta : patch.getDeltas()) {
 
       String text = null;
-      int line = delta.getSource().getPosition() - 1;
-      int endLine = line + delta.getSource().size();
-      int startChar = file1.get(line).length();
-      int endChar = file1.get(endLine).length();
+      int line = delta.getSource().getPosition();
+      int startChar = 0;
+      int endLine = 0;
+      int endChar = 0;
+      if (line > 0) {
+        line -= 1;
+        startChar = file1.get(line).length();
+        endChar = file1.get(endLine).length();
+      }
+      endLine = line + delta.getSource().size();
 
       switch (delta.getType()) {
         case DELETE:

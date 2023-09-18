@@ -64,7 +64,7 @@
   },
   "publisher": "y1rn",
   "scripts": {
-    "mvn": "mvn clean package -Doutput=\"../dist/\" -f ./google-java-format-service/pom.xml",
+    "mvn": "mvn clean package -Doutput=\"../dist/\" -f ./java-format-service/pom.xml",
     "vscode:prepublish": "npm run package && npm run mvn",
     "compile": "webpack",
     "watch": "webpack --watch",

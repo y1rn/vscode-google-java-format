@@ -4,10 +4,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>y1rn.javaformat</groupId>
-  <artifactId>google-java-format-service</artifactId>
+  <artifactId>java-format-service</artifactId>
   <version>1.0</version>
 
-  <name>google-java-format-service</name>
+  <name>java-format-service</name>
   <description>A simple google-java-format-service</description>
 
   <properties>

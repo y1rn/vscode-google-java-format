@@ -2,16 +2,13 @@
   "name": "java-format",
   "displayName": "Java format service",
   "description": "Java format service with google-java-format",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.65.0"
   },
   "license": "SEE LICENSE IN LICENSE",
   "categories": [
     "Other"
-  ],
-  "extensionDependencies": [
-    "redhat.java"
   ],
   "activationEvents": [
     "onLanguage:java"
@@ -64,8 +61,9 @@
   },
   "publisher": "y1rn",
   "scripts": {
-    "mvn": "mvn clean package -Doutput=\"../dist/\" -f ./java-format-service/pom.xml",
-    "vscode:prepublish": "npm run package && npm run mvn",
+    "exe": "mvn -Pnative clean package -Dexeout=dist -Djarout=dist -f ./java-format-service/pom.xml && upx dist/java-format-service",
+    "jar": "mvn clean package -Djarout=dist -f ./java-format-service/pom.xml",
+    "vscode:prepublish": "npm run package && npm run jar",
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",

@@ -8,14 +8,14 @@
   <version>1.0</version>
 
   <name>java-format-service</name>
-  <description>A simple google-java-format-service</description>
+  <description>google-java-format-service</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <output>target</output>
-    <execoutput>.</execoutput>
+    <jarout>target</jarout>
+    <exeout>target</exeout>
   </properties>
 
   <dependencies>
@@ -61,6 +61,7 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.5.0</version>
         <configuration>
+          <createDependencyReducedPom>false</createDependencyReducedPom>
           <filters>
             <filter>
               <artifact>*:*</artifact>
@@ -91,9 +92,23 @@
               <mainClass>y1rn.javaformat.RPC</mainClass>
             </manifest>
           </archive>
-          <outputDirectory>${output}</outputDirectory>
+          <outputDirectory>${user.dir}/${jarout}</outputDirectory>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.1.2</version>
+          <configuration>
+            <argLine>
+              --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+            </argLine>
+          </configuration>
+       </plugin>
     </plugins>
   </build>
 
@@ -103,32 +118,48 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.graalvm.buildtools</groupId>
-            <artifactId>native-maven-plugin</artifactId>
-            <extensions>true</extensions>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
             <executions>
               <execution>
-                <id>build-native</id>
-                <goals>
-                  <goal>compile-no-fork</goal>
-                </goals>
                 <phase>package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>docker</executable>
+                  <workingDirectory>.</workingDirectory>
+                  <arguments>
+                    <argument>run</argument>
+                    <argument>--rm</argument>
+                    <argument>-v=${basedir}/target:/app</argument>
+                    <argument>-v=${user.dir}/${jarout}:/jar</argument>
+                    <argument>-v=${user.dir}/${exeout}:/out</argument>
+                    <argument>ghcr.io/graalvm/native-image-community</argument>
+                    <argument>-jar</argument>
+                    <argument>/jar/${project.artifactId}.jar</argument>
+                    <argument>-march=native</argument>
+                    <argument>-J-Xlog:jni+resolve=off</argument>
+                    <argument>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</argument>
+                    <argument>--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</argument>
+                    <argument>--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</argument>
+                    <argument>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</argument>
+                    <argument>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</argument>
+                    <argument>-H:ReflectionConfigurationFiles=/app/classes/reflect-config.json</argument>
+                    <argument>-H:IncludeResourceBundles=com.sun.tools.javac.resources.compiler</argument>
+                    <argument>--no-fallback</argument>
+                    <argument>--initialize-at-build-time=com.sun.tools.javac.file.Locations</argument>
+                    <argument>--initialize-at-build-time=com.google.common.base.Platform</argument>
+                    <argument>--initialize-at-build-time=y1rn.javaformat.LogConfig</argument>
+                    <argument>-o</argument>
+                    <argument>/out/${project.artifactId}</argument>
+                  </arguments>
+                  <environmentVariables>
+                  </environmentVariables>
+                </configuration>
               </execution>
             </executions>
-            <configuration>
-              <buildArgs>
-                  <arg>-march=native</arg>
-                  <arg>--gc=G1</arg>
-                  <arg>-Ob</arg>
-                  <arg>-J-Xlog:jni+resolve=off</arg>
-                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
-                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
-                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
-                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-                  <arg>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-                  <arg>-o ${execoutput}/${project.artifactId}</arg>
-              </buildArgs>
-            </configuration>
           </plugin>
         </plugins>
       </build>

@@ -111,43 +111,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function startUp(context: vscode.ExtensionContext): Promise<rpc.MessageConnection> {
 
-
-  // if (!fs.existsSync(context.globalStorageUri.fsPath)) {
-  //   fs.mkdir(context.globalStorageUri.fsPath, (error: any) => error ? console.log(error) : console.log('You have created extension folder: ' + context.globalStorageUri.fsPath));
-  // }
-  // const filePath = context.globalState.get<string>("google-java-format.jar-file");
-  // if (!filePath || filePath == "" || !fs.existsSync(filePath.toString())) {
-  //   return new Promise((resolve, reject) => {
-  //     vscode.window.withProgress({
-  //       location: vscode.ProgressLocation.Notification,
-  //       title: "google-java-format",
-  //       cancellable: false
-  //     }, (progress) => {
-  //       let p = DownloadGJF(context, progress);
-
-  //       p.then(async () => {
-  //         const connection = await StartRPC(context);
-  //         resolve(connection);
-  //         return {
-  //           message:'download finish',
-  //           increment: 100,
-  //         }
-  //       });
-        
-  //       p.catch((err) => {
-  //         console.error(err);
-  //         reject();
-  //         return Promise.reject()
-  //       })
-  //       return p;
-  //     }
-  //     );
-  //   });
-  // } else {
-  //   return StartRPC(context);
-  // }
-
-
   return StartRPC(context);
 
 }

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "y1rn.javaformat.Request",
+    "allDeclaredConstructors" : true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },{
+    "name": "y1rn.javaformat.Request$Range",
+    "allDeclaredConstructors" : true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },{
+    "name": "y1rn.javaformat.TextEdit",
+    "allDeclaredConstructors" : true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },{
+    "name": "y1rn.javaformat.TextEdit$Range",
+    "allDeclaredConstructors" : true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },{
+    "name": "y1rn.javaformat.TextEdit$Position",
+    "allDeclaredConstructors" : true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },{
+    "name": "org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage",
+    "allDeclaredConstructors" : true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  }
+  
+]

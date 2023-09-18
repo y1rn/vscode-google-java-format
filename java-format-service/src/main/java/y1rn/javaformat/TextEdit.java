@@ -1,11 +1,13 @@
 package y1rn.javaformat;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
 @ToString
+@NoArgsConstructor
 public class TextEdit {
 
   Range range;
@@ -20,16 +22,18 @@ public class TextEdit {
   }
 
   @Data
-  @Builder
   @ToString
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class Range {
     Position start;
     Position end;
   }
 
   @Data
-  @Builder
   @ToString
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class Position {
     int line;
     int character;

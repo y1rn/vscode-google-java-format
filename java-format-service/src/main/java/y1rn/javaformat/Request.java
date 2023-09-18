@@ -1,7 +1,6 @@
 package y1rn.javaformat;
 
 import com.google.googlejavaformat.java.JavaFormatterOptions.Style;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

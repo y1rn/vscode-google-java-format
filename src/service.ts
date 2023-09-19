@@ -60,9 +60,9 @@ export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.Me
         new rpc.StreamMessageReader(childProcess.stdout),
         new rpc.StreamMessageWriter(childProcess.stdin));
       // let connection = rpc.createMessageConnection(childProcess.stdout, childProcess.stdin, console);
-      childProcess.stderr.on('data', data => {
-        console.error(data.toString());
-      });
+      // childProcess.stderr.on('data', data => {
+      //   console.error(data.toString());
+      // });
       connection.onClose(() => {
         console.info("connection close");
       });

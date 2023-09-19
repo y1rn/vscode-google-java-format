@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+
 import lombok.extern.java.Log;
 import org.eclipse.lsp4j.jsonrpc.StandardLauncher;
 import org.eclipse.lsp4j.jsonrpc.json.JsonRpcMethod;
@@ -36,25 +38,21 @@ public class RPC {
             mjh,
             (Message message, List<MessageIssue> issues) -> {
 
-              log.severe(message.toString());
-              issues.forEach(issue -> {
+              if (!issues.isEmpty()) {
+                MessageIssue issue = issues.get(0);
                 ResponseMessage resp = new ResponseMessage();
                 resp.setId(Integer.parseInt(((RequestMessage)message).getId()));
-
-                ResponseError re = new ResponseError();
-                re.setCode(issue.getIssueCode());
-                re.setMessage(issue.getText());
-                resp.setResult(re);
-
+                resp.setResult(issue.getCause().getMessage()+"["+issue.getCause().getStackTrace()[0].toString()+"]");
                 fh.writeResponse(resp);
+              }
 
+              log.severe(message.toString());
+              issues.forEach(issue -> {
                 log.severe(issue.getCause().getMessage());
                 for (StackTraceElement traceElement : issue.getCause().getStackTrace()) {
                   log.severe(traceElement.toString());
                 }
-                
               });
-             
             });
     StandardLauncher<Void> launcher = new StandardLauncher<>(smp, fh, es, null, null);
     launcher.startListening();

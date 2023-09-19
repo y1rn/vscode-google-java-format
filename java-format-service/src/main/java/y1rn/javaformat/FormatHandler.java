@@ -17,8 +17,8 @@ import org.eclipse.lsp4j.jsonrpc.MessageIssueException;
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler;
 import org.eclipse.lsp4j.jsonrpc.json.StreamMessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.messages.Message;
+import org.eclipse.lsp4j.jsonrpc.messages.MessageIssue;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
 @Log
@@ -94,11 +94,7 @@ public class FormatHandler extends StreamMessageConsumer {
       String sep = Newlines.guessLineSeparator(input);
       respResult = Differ.getTextEdit(input, output, sep);
     } catch (Exception e) {
-      ResponseMessage resp = new ResponseMessage();
-      resp.setId(Integer.parseInt(requestId));
-      resp.setError(new ResponseError(400, e.getMessage(), null));
-      super.consume(resp);
-      throw new JsonRpcException(e);
+      throw new MessageIssueException(request,new MessageIssue("format error",500,e));
     }
     ResponseMessage resp = new ResponseMessage();
     resp.setId(Integer.parseInt(requestId));

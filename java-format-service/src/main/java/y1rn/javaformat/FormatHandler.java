@@ -94,7 +94,7 @@ public class FormatHandler extends StreamMessageConsumer {
       String sep = Newlines.guessLineSeparator(input);
       respResult = Differ.getTextEdit(input, output, sep);
     } catch (Exception e) {
-      throw new MessageIssueException(request,new MessageIssue("format error",500,e));
+      throw new MessageIssueException(request, new MessageIssue("format error", 500, e));
     }
     ResponseMessage resp = new ResponseMessage();
     resp.setId(Integer.parseInt(requestId));
@@ -102,3 +102,4 @@ public class FormatHandler extends StreamMessageConsumer {
     super.consume(resp);
   }
 }
+

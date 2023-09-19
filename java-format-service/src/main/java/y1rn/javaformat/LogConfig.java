@@ -1,20 +1,20 @@
 package y1rn.javaformat;
 
+import com.google.common.base.Strings;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-import com.google.common.base.Strings;
-
 public class LogConfig {
 
   private static boolean loaded;
+
   static {
     init();
   }
 
-  private LogConfig(){}
+  private LogConfig() {}
 
   public static synchronized void init() {
     if (loaded) {
@@ -60,5 +60,6 @@ public class LogConfig {
       v = System.getProperty(key);
     }
     return Strings.isNullOrEmpty(v) ? def : v;
-  } 
+  }
 }
+

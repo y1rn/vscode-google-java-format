@@ -36,9 +36,11 @@ public class Differ {
       if (line > 0) {
         line -= 1;
         startChar = file1.get(line).length();
+        endLine = line + delta.getSource().size();
         endChar = file1.get(endLine).length();
+      } else {
+        endLine = line + delta.getSource().size();
       }
-      endLine = line + delta.getSource().size();
 
       switch (delta.getType()) {
         case DELETE:

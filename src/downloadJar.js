@@ -9,7 +9,9 @@ if (process.env.https_proxy) {
 }
 
 (process.argv.slice(2)).forEach(async (value, _) => {
-  var filename = value.substring(value.lastIndexOf('/') + 1)
+  var filename = value.substring(value.lastIndexOf('/') + 1);
+  var filePath = 'dist' + path.sep + filename;
+  if (fs.existsSync(filePath)) return;
   const response = await fetch(value, { agent: agent, timeout: 20000 });
 
   if (!response.ok) {
@@ -19,5 +21,6 @@ if (process.env.https_proxy) {
     return Promise.reject();
   }
   const buffer = await response.buffer();
-  await fs.promises.writeFile('dist' + path.sep + filename, buffer);
+  await fs.promises.writeFile(filePath, buffer);
 });
+

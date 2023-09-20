@@ -61,7 +61,7 @@
   },
   "publisher": "y1rn",
   "scripts": {
-    "postpackage": "node src/downloadJar.js https://github.com/y1rn/java-format-service/releases/download/v0.0.1/java-format-service.jar",
+    "postpackage": "echo \"require('./src/downloader.js')('dist','y1rn/java-format-service','java-format-service.jar','.*')\" | node",
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
@@ -69,8 +69,7 @@
     "test-compile": "tsc -p ./",
     "test-watch": "tsc -watch -p ./",
     "pretest": "npm run test-compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "lint": "eslint src --ext ts"
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",

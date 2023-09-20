@@ -1,4 +1,3 @@
-
 import * as vscode from 'vscode';
 import { platform, arch } from 'os'
 import * as glob from 'fast-glob';
@@ -6,6 +5,7 @@ import { sep } from 'path'
 import * as cp from 'child_process';
 import * as rpc from 'vscode-jsonrpc/node';
 import * as fs from 'fs';
+import * as download from './downloader';
 
 
 const LOCAL_EXE_FILE = 'java-format-service';
@@ -17,6 +17,12 @@ const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNN
   '--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
   '--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
   '--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'];
+
+const archSet:Set<String> = new Set([
+  'win32-amd64',
+  'linux-amd64',
+]);
+
 
 
 export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.MessageConnection> {
@@ -35,7 +41,7 @@ export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.Me
   const exe_file = context.extensionPath + sep + 'dist' + sep + LOCAL_EXE_FILE
 
 
-  return new Promise<rpc.MessageConnection>((resolve, reject) => {
+  return new Promise<rpc.MessageConnection>((resolve) => {
     fs.access(exe_file, fs.constants.X_OK, err => {
       let childProcess: cp.ChildProcessWithoutNullStreams;
       if (!err) {
@@ -77,7 +83,16 @@ export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.Me
 
 }
 
-function fileSubfix(): string {
+async function getExec(context:vscode.ExtensionContext): Promise<string> {
+  const sa = systemArch();
+  if (archSet.has(sa)){
+    const exe = await download(context.extensionPath + sep + 'dist','y1rn/java-format-service','java-format-service_'+sa,'*');
+    return Promise.resolve(exe);
+  }
+  return Promise.reject();
+}
+
+function systemArch(): string {
   const p = platform();
   let a = arch();
   if (a == 'x64') a = 'amd64';

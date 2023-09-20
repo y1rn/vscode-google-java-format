@@ -61,9 +61,8 @@
   },
   "publisher": "y1rn",
   "scripts": {
-    "exe": "mvn -Pnative clean package -Dexeout=dist -Djarout=dist -f ./java-format-service/pom.xml && upx dist/java-format-service",
-    "jar": "mvn clean package -Djarout=dist -f ./java-format-service/pom.xml",
-    "vscode:prepublish": "npm run package && npm run jar",
+    "postpackage": "node src/downloadJar.js https://github.com/y1rn/java-format-service/releases/download/v0.0.1/java-format-service.jar",
+    "vscode:prepublish": "npm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",

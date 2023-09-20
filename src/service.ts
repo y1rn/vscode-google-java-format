@@ -1,17 +1,17 @@
 
-import * as vscode from "vscode";
-import { platform } from 'os'
-import * as glob from "fast-glob";
+import * as vscode from 'vscode';
+import { platform, arch } from 'os'
+import * as glob from 'fast-glob';
 import { sep } from 'path'
-import * as cp from "child_process";
+import * as cp from 'child_process';
 import * as rpc from 'vscode-jsonrpc/node';
-import * as fs from "fs";
+import * as fs from 'fs';
 
 
-const LOCAL_EXE_FILE = "java-format-service";
+const LOCAL_EXE_FILE = 'java-format-service';
 
-const LOCAL_JAR_FILE = "java-format-service.jar";
-const JAVA_GLOB = `${sep}jre${sep}*${sep}bin${sep}java${(platform() == 'win32' ? ".exe" : "")}`;
+const LOCAL_JAR_FILE = 'java-format-service.jar';
+const JAVA_GLOB = `${sep}jre${sep}*${sep}bin${sep}java${(platform() == 'win32' ? '.exe' : '')}`;
 const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
   '--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
   '--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
@@ -21,9 +21,9 @@ const JAVA_EXPORT = ['--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNN
 
 export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.MessageConnection> {
 
-  const localJarPath = context.extensionPath + sep + "dist" + sep + LOCAL_JAR_FILE;
-  let cmd = "java";
-  let redhatPath = vscode.extensions.getExtension("redhat.java")?.extensionPath;
+  const localJarPath = context.extensionPath + sep + 'dist' + sep + LOCAL_JAR_FILE;
+  let cmd = 'java';
+  let redhatPath = vscode.extensions.getExtension('redhat.java')?.extensionPath;
   if (redhatPath) {
     const pattern = platform() == 'win32' ? glob.convertPathToPattern(redhatPath + JAVA_GLOB) : redhatPath + JAVA_GLOB
     const files = await glob([pattern], { dot: true });
@@ -32,7 +32,7 @@ export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.Me
     }
   }
 
-  const exe_file = context.extensionPath + sep + "dist" + sep + LOCAL_EXE_FILE
+  const exe_file = context.extensionPath + sep + 'dist' + sep + LOCAL_EXE_FILE
 
 
   return new Promise<rpc.MessageConnection>((resolve, reject) => {
@@ -64,7 +64,7 @@ export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.Me
       //   console.error(data.toString());
       // });
       connection.onClose(() => {
-        console.info("connection close");
+        console.info('connection close');
       });
       connection.onError(err => {
         console.error(err);
@@ -76,3 +76,11 @@ export async function StartRPC(context: vscode.ExtensionContext): Promise<rpc.Me
   });
 
 }
+
+function fileSubfix(): string {
+  const p = platform();
+  let a = arch();
+  if (a == 'x64') a = 'amd64';
+  return '_' + p + '-' + a
+}
+

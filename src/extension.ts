@@ -1,23 +1,22 @@
-// The module 'vscode' contains the VS Code extensibility API
 import * as vscode from "vscode";
 import * as rpc from 'vscode-jsonrpc/node';
 import { StartRPC } from './service';
 import { JsonToTextEdit } from './utils';
 
-interface formatRange{
+interface FormatRange{
   start: number,
   end: number,
 
 }
-interface formatRequestData {
+interface FormatRequestData {
   skipSortingImports: boolean,
   skipRemovingUnusedImports: boolean,
   style: string,
   data: string,
-  range: formatRange,
+  range: FormatRange,
 }
 
-const FORMAT_REQUEST = new rpc.RequestType<formatRequestData, vscode.TextEdit[], void>("format");
+const FORMAT_REQUEST = new rpc.RequestType<FormatRequestData, vscode.TextEdit[], void>("format");
 const EXIT_NOTIFICATION = new rpc.NotificationType0("exit");
 
 let FORMATER_NAME: string;
@@ -57,19 +56,18 @@ export function activate(context: vscode.ExtensionContext) {
         options: vscode.FormattingOptions,
         token: vscode.CancellationToken
       ): Promise<vscode.TextEdit[]> {
-        if (!!SP) {
+        if (SP) {
           return new Promise((resolve, reject) => {
             SP?.then((connection) => {
-              resolve( doFormatCode(connection, document, range))
+              resolve(doFormatCode(connection, document, range))
             });
-            SP?.catch(() => {
-              SP = startUp(context)
-              reject();
+            SP?.catch((err) => {
+              reject(err);
             });
           });
         } else {
           // vscode.window.showErrorMessage("java format service not avaliable")
-          return Promise.reject();
+          return Promise.reject(new Error("java format service not avaliable"));
         }
       },
     },
@@ -83,19 +81,18 @@ export function activate(context: vscode.ExtensionContext) {
         options: vscode.FormattingOptions,
         token: vscode.CancellationToken
       ): Promise<vscode.TextEdit[]> {
-        if (!!SP) {
+        if (SP) {
           return new Promise((resolve, reject) => {
             SP?.then((connection) => {
-              resolve( doFormatCode(connection, document))
+              resolve(doFormatCode(connection, document))
             });
-            SP?.catch(() => {
-              SP = startUp(context)
-              reject();
+            SP?.catch((err) => {
+              reject(err);
             });
           });
         } else {
           // vscode.window.showErrorMessage("java format service not avaliable")
-          return Promise.reject();
+          return Promise.reject(new Error("java format service not avaliable"));
         }
       }
     }
@@ -130,14 +127,14 @@ export function deactivate() {
 
 async function doFormatCode(connection: rpc.MessageConnection, document: vscode.TextDocument, range?: vscode.Range): Promise<vscode.TextEdit[]> {
   const cfg = vscode.workspace.getConfiguration("google-java-format", null);
-  let r: formatRange | undefined = undefined;
-  if (!!range) {
-    r = <formatRange> {
+  let r: FormatRange | undefined = undefined;
+  if (range) {
+    r = <FormatRange> {
       start: range.start.line,
       end: range.end.line,
     }
   }
-  const data = <formatRequestData>{
+  const data = <FormatRequestData>{
     skipSortingImports: cfg.get("skipSortingImports"),
     skipRemovingUnusedImports: cfg.get("skipRemovingUnusedImports"),
     style: cfg.get("style"),

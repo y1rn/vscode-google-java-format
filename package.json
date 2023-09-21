@@ -2,7 +2,7 @@
   "name": "java-format",
   "displayName": "Java format service",
   "description": "Java format service with google-java-format",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "engines": {
     "vscode": "^1.65.0"
   },
@@ -61,7 +61,7 @@
   },
   "publisher": "y1rn",
   "scripts": {
-    "postpackage": "echo \"require('./src/downloader.js')('dist','y1rn/java-format-service','java-format-service.jar','.*')\" | node",
+    "postpackage": "echo \"require('./src/downloader.js')('dist','y1rn/java-format-service','java-format-service.jar')\" | node",
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
